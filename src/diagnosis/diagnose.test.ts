@@ -119,4 +119,32 @@ describe("diagnose", () => {
       "使い方として大きな取りこぼしは見当たりません",
     );
   });
+
+  it("treats unknown quota as possibly left, not as mostly used", () => {
+    expectDiagnosis(
+      {
+        account: "opened",
+        quotaUse: "unknown",
+        frameUse: "both",
+        idleCash: "lots",
+        taxableLeak: "yes",
+      },
+      "loss",
+      ["unknown-quota", "idle-cash-lots", "taxable-while-quota-left"],
+    );
+  });
+
+  it("marks unknown quota alone as risky, not ok", () => {
+    expectDiagnosis(
+      {
+        account: "opened",
+        quotaUse: "unknown",
+        frameUse: "tsumitate",
+        idleCash: "none",
+        taxableLeak: "no",
+      },
+      "risky",
+      ["unknown-quota"],
+    );
+  });
 });

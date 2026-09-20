@@ -17,6 +17,7 @@ export type FindingId =
   | "planning-only"
   | "unused-quota"
   | "partial-quota"
+  | "unknown-quota"
   | "idle-cash-lots"
   | "idle-cash-some"
   | "taxable-while-quota-left"

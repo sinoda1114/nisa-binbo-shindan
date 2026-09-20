@@ -1,10 +1,12 @@
 import type { Answers, Rule } from "./types";
 
-const quotaLeft = (answers: Answers) =>
-  answers.quotaUse === "none" || answers.quotaUse === "some";
+const quotaPossiblyLeft = (answers: Answers) =>
+  answers.quotaUse === "none" ||
+  answers.quotaUse === "some" ||
+  answers.quotaUse === "unknown";
 
 const idleWhileQuotaOpen = (answers: Answers) =>
-  answers.account !== "opened" || quotaLeft(answers);
+  answers.account !== "opened" || quotaPossiblyLeft(answers);
 
 export const RULES: Rule[] = [
   {
@@ -40,6 +42,14 @@ export const RULES: Rule[] = [
       "年間枠の未使用分は翌年に繰り越せません。半分くらいの使用だと、残りの枠を取りこぼす可能性があります。残枠の有無を確認してほしい点です。",
   },
   {
+    id: "unknown-quota",
+    severity: "risk",
+    when: (answers) => answers.account === "opened" && answers.quotaUse === "unknown",
+    title: "今年の年間投資枠をどれくらい使ったかわかりません",
+    detail:
+      "使用量がわからないと、未使用のまま年を越していないかを判断できません。未使用の年間枠は翌年に繰り越せません。証券会社の画面で今年の残枠を確認してほしい点です。",
+  },
+  {
     id: "idle-cash-lots",
     severity: "loss",
     when: (answers) => answers.idleCash === "lots" && idleWhileQuotaOpen(answers),
@@ -59,7 +69,9 @@ export const RULES: Rule[] = [
     id: "taxable-while-quota-left",
     severity: "loss",
     when: (answers) =>
-      answers.taxableLeak === "yes" && answers.account === "opened" && quotaLeft(answers),
+      answers.taxableLeak === "yes" &&
+      answers.account === "opened" &&
+      quotaPossiblyLeft(answers),
     title: "NISAの枠が残っているのに、課税口座側で買っています",
     detail:
       "年間枠が残っているのに課税口座で買っていると、同じ買い付けでも非課税の恩恵を使えていない可能性があります。つみたて投資枠は年120万円、成長投資枠は年240万円です。枠の残量を確認してほしい点です。",
