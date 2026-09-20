@@ -1,19 +1,19 @@
-name: test
+# 標準CI呼び出し（実体: https://github.com/sinoda1114/ci-standard）
+name: CI
 
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+  ci:
+    # secrets: inherit は付けない（最小権限。標準CIはシークレット不使用、値は .github/ci.env 供給）
+    uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@main
