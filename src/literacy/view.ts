@@ -1,4 +1,4 @@
-import { literacyMood, resultBadge, resultCharacter } from "../result-art";
+import { literacyMood, resultHead } from "../result-art";
 import { LITERACY_IMAGE_NAME } from "../result-image";
 import { mountSharePanel } from "../share-panel";
 import { PROVISIONAL_TITLE, QUESTIONS, TITLE_NOTE, type Question } from "./quiz";
@@ -219,13 +219,8 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
       `stamp verdict ${STAMP_CLASS[diagnosis.verdict]}`,
       VERDICT_LABEL[diagnosis.verdict],
     );
-    const mood = literacyMood(diagnosis.verdict);
-    const head = el("div", "result-head");
-    const marks = el("div", "result-marks");
-    marks.append(stamp, resultBadge(mood));
-    head.append(marks, resultCharacter(mood));
     card.append(el("p", "running", PROVISIONAL_TITLE));
-    card.append(head);
+    card.append(resultHead(stamp, literacyMood(diagnosis.verdict)));
     card.append(el("h1", "headline", diagnosis.headline));
     card.append(el("p", "summary", diagnosis.summary));
     if (diagnosis.findings.length > 0) {

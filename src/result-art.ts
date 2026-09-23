@@ -59,10 +59,12 @@ function artFrame(className: string, raw: string): HTMLElement {
   return frame;
 }
 
-export function resultBadge(mood: ResultMood): HTMLElement {
-  return artFrame("result-badge", ART[mood].badge);
-}
-
-export function resultCharacter(mood: ResultMood): HTMLElement {
-  return artFrame("result-character", ART[mood].character);
+export function resultHead(stamp: HTMLElement, mood: ResultMood): HTMLElement {
+  const head = document.createElement("div");
+  head.className = "result-head";
+  const marks = document.createElement("div");
+  marks.className = "result-marks";
+  marks.append(stamp, artFrame("result-badge", ART[mood].badge));
+  head.append(marks, artFrame("result-character", ART[mood].character));
+  return head;
 }
