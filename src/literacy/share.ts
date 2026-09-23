@@ -1,46 +1,21 @@
-export const PUBLIC_PAGE_URL = "https://nisa-binbo-shindan.vercel.app";
+import {
+  shareDestinations,
+  type ShareDestination,
+} from "../share-destinations";
+import type { Verdict } from "./types";
 
-export type ShareTargetId = "x" | "line" | "facebook" | "threads";
+export { linkToCopy, PUBLIC_URL as PUBLIC_PAGE_URL } from "../share-destinations";
 
-export type ShareTarget = {
-  id: ShareTargetId;
-  label: string;
-  href: string;
+const BLURB: Record<Verdict, string> = {
+  gap: "私の金融リテラシー診断です。誤解がありそう、という結果です。",
+  shaky: "私の金融リテラシー診断です。確認した方がよさそう、という結果です。",
+  solid: "私の金融リテラシー診断です。概ね合っている、という結果です。",
 };
 
-export function shareMessage(headline: string): string {
-  return `${headline}\n${PUBLIC_PAGE_URL}`;
+export function shareMessage(verdict: Verdict): string {
+  return BLURB[verdict];
 }
 
-export function linkToCopy(): string {
-  return PUBLIC_PAGE_URL;
-}
-
-export function shareTargets(headline: string): ShareTarget[] {
-  const message = shareMessage(headline);
-  const encodedMessage = encodeURIComponent(message);
-  const encodedPage = encodeURIComponent(PUBLIC_PAGE_URL);
-  const encodedHeadline = encodeURIComponent(headline);
-  return [
-    {
-      id: "x",
-      label: "X",
-      href: `https://x.com/intent/post?text=${encodedMessage}`,
-    },
-    {
-      id: "line",
-      label: "LINE",
-      href: `https://line.me/R/msg/text/?${encodedMessage}`,
-    },
-    {
-      id: "facebook",
-      label: "Facebook",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedPage}&quote=${encodedHeadline}`,
-    },
-    {
-      id: "threads",
-      label: "Threads",
-      href: `https://www.threads.net/intent/post?text=${encodedMessage}`,
-    },
-  ];
+export function shareTargets(verdict: Verdict): ShareDestination[] {
+  return shareDestinations(shareMessage(verdict));
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { diagnose } from "./diagnose";
+import { VERDICT_COPY, diagnose } from "./diagnose";
+import { RULES } from "./rules";
 import type { Answers, FindingId, Verdict } from "./types";
 
 const NEUTRAL = {
@@ -47,7 +48,7 @@ describe("diagnose", () => {
     );
     expect(result.verdict).toBe("ok");
     expect(result.findings.map((finding) => finding.id)).toEqual([]);
-    expect(result.headline).toBe("今年の枠、ちゃんと座れてます");
+    expect(result.headline).toBe("今年の枠、ちゃんと使えてます");
   });
 
   it("marks no account plus lots of idle cash as loss", () => {
@@ -59,7 +60,7 @@ describe("diagnose", () => {
       taxableLeak: "unknown",
     });
     expectDiagnosis(answers, "loss", ["no-account", "idle-cash-lots"]);
-    expect(diagnose(answers).headline).toBe("非課税の席、空席の気配です");
+    expect(diagnose(answers).headline).toBe("非課税の枠、取りこぼしています");
   });
 
   it("stacks unused quota, idle cash, taxable leak, and unsure frames as loss", () => {
@@ -134,7 +135,7 @@ describe("diagnose", () => {
     );
     expect(result.verdict).toBe("ok");
     expect(result.findings.map((finding) => finding.id)).toEqual([]);
-    expect(result.headline).toBe("今年の枠、ちゃんと座れてます");
+    expect(result.headline).toBe("今年の枠、ちゃんと使えてます");
   });
 
   it("does not claim leftover quota when usage is unknown and buying outside NISA", () => {
@@ -270,7 +271,7 @@ describe("diagnose", () => {
       soldThisYear: "stopped",
     });
     expectDiagnosis(answers, "loss", ["sold-and-stopped"]);
-    expect(diagnose(answers).headline).toBe("非課税の席、空席の気配です");
+    expect(diagnose(answers).headline).toBe("非課税の枠、取りこぼしています");
   });
 
   it("does not treat an unknown sale as a finding", () => {
@@ -376,6 +377,14 @@ describe("diagnose", () => {
       "loss",
       ["dividend-taxed"],
     );
+  });
+
+  it("does not use the seat metaphor in headlines, findings, or advice", () => {
+    const text = [
+      ...Object.values(VERDICT_COPY).flatMap((copy) => [copy.headline, copy.summary]),
+      ...RULES.flatMap((rule) => [rule.title, rule.detail]),
+    ].join("\n");
+    expect(text).not.toMatch(/席|座れ|座って/);
   });
 
   it("does not flag an unknown dividend route", () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { shareDestinations } from "../share-destinations";
 import { diagnose } from "./diagnose";
 import {
   PUBLIC_PAGE_URL,
@@ -6,62 +7,30 @@ import {
   shareMessage,
   shareTargets,
 } from "./share";
-import type { Answers } from "./types";
+import type { Answers, Verdict } from "./types";
 
-const HEADLINE = "制度の理解に、誤解が残っている可能性があります";
+const VERDICTS: Verdict[] = ["gap", "shaky", "solid"];
 
 describe("literacy share", () => {
-  it("shares the headline and the public URL, and nothing else", () => {
-    expect(shareMessage(HEADLINE).split("\n")).toEqual([
-      HEADLINE,
-      PUBLIC_PAGE_URL,
-    ]);
+  it("says this is my literacy diagnosis, and keeps the URL for the link copy only", () => {
+    expect(shareMessage("gap")).toBe(
+      "私の金融リテラシー診断です。誤解がありそう、という結果です。",
+    );
+    expect(shareMessage("shaky")).toBe(
+      "私の金融リテラシー診断です。確認した方がよさそう、という結果です。",
+    );
+    expect(shareMessage("solid")).toBe(
+      "私の金融リテラシー診断です。概ね合っている、という結果です。",
+    );
     expect(linkToCopy()).toBe(PUBLIC_PAGE_URL);
-    expect(PUBLIC_PAGE_URL).toBe("https://nisa-binbo-shindan.vercel.app");
-  });
-
-  it("opens X, LINE, Facebook, and Threads in that order", () => {
-    const targets = shareTargets(HEADLINE);
-    expect(targets.map((target) => target.label)).toEqual([
-      "X",
-      "LINE",
-      "Facebook",
-      "Threads",
-    ]);
-    expect(targets.map((target) => target.id)).toEqual([
-      "x",
-      "line",
-      "facebook",
-      "threads",
-    ]);
-
-    const message = shareMessage(HEADLINE);
-    const x = new URL(targets[0]?.href ?? "");
-    expect(x.origin + x.pathname).toBe("https://x.com/intent/post");
-    expect(x.searchParams.get("text")).toBe(message);
-
-    const line = targets[1]?.href ?? "";
-    expect(line.startsWith("https://line.me/R/msg/text/?")).toBe(true);
-    expect(line).toContain(encodeURIComponent(HEADLINE));
-    expect(line).toContain(encodeURIComponent(PUBLIC_PAGE_URL));
-
-    const facebook = new URL(targets[2]?.href ?? "");
-    expect(facebook.origin + facebook.pathname).toBe(
-      "https://www.facebook.com/sharer/sharer.php",
-    );
-    expect(facebook.searchParams.get("u")).toBe(PUBLIC_PAGE_URL);
-    expect(facebook.searchParams.get("quote")).toBe(HEADLINE);
-
-    const threads = new URL(targets[3]?.href ?? "");
-    expect(threads.origin + threads.pathname).toBe(
-      "https://www.threads.net/intent/post",
-    );
-    expect(threads.searchParams.get("text")).toBe(message);
-
-    const packed = targets.map((target) => target.href).join(" ");
-    expect(packed).not.toContain("image/png");
-    expect(packed).not.toContain("data:");
-    expect(packed).not.toMatch(/[?&](media|image|attachment)=/);
+    for (const verdict of VERDICTS) {
+      const message = shareMessage(verdict);
+      expect(message.startsWith("私の金融リテラシー診断です")).toBe(true);
+      expect(message).not.toContain("NISA貧乏");
+      expect(message).not.toContain(PUBLIC_PAGE_URL);
+      expect(message).not.toContain("http");
+      expect(shareTargets(verdict)).toEqual(shareDestinations(message));
+    }
   });
 
   it("does not put a diagnosed answer payload into the share links", () => {
@@ -76,12 +45,12 @@ describe("literacy share", () => {
       tsumitate: "always-up",
       trustFee: "purchase-only",
     };
-    const headline = diagnose(answers).headline;
-    const packed = shareTargets(headline)
+    const verdict = diagnose(answers).verdict;
+    const packed = shareTargets(verdict)
       .map((target) => target.href)
       .join(" ");
     expect(packed).not.toContain("nominal-only");
     expect(packed).not.toContain("always-up");
-    expect(shareMessage(headline)).not.toContain("purchase-only");
+    expect(shareMessage(verdict)).not.toContain("purchase-only");
   });
 });

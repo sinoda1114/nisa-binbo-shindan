@@ -141,7 +141,7 @@ describe("literacy diagnose", () => {
 
   it("keeps answer slugs out of the headline, summary, and share text", () => {
     const result = diagnose(wrongAnswers());
-    const shared = shareMessage(result.headline);
+    const shared = shareMessage(result.verdict);
     for (const slug of ANSWER_SLUGS) {
       expect(result.headline).not.toContain(slug);
       expect(result.summary).not.toContain(slug);

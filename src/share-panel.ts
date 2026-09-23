@@ -171,7 +171,7 @@ export function mountSharePanel(
     status.setAttribute("role", "status");
     status.textContent = notice;
 
-    const toggle = el("button", "btn btn-share", "投稿画面を開く");
+    const toggle = el("button", "btn btn-share", "結果をシェア");
     toggle.type = "button";
     toggle.setAttribute("data-share-action", "toggle");
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
@@ -200,7 +200,7 @@ export function mountSharePanel(
         el(
           "p",
           "share-hint",
-          "投稿画面に画像は付きません。開いたあと、コピーした画像を貼り付けてください。",
+          "シェアに画像は付きません。開いたあと、コピーした画像を貼り付けてください。",
         ),
       );
       const list = el("ul", "share-list");

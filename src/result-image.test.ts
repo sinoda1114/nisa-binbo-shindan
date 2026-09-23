@@ -56,11 +56,13 @@ describe("imageShareNotice", () => {
       "画像をコピーしました。投稿欄に貼り付けてください。",
     );
     expect(imageShareNotice("copied", "X")).toBe(
-      "画像をコピーしました。Xの投稿画面で貼り付けてください。",
+      "画像をコピーしました。Xを開いたあと、貼り付けてください。",
     );
     expect(imageShareNotice("saved", "LINE")).toBe(
       "画像を保存しました。LINEでは、保存した画像を添付してください。",
     );
+    expect(imageShareNotice("copied", "X")).not.toContain("シェアには");
+    expect(imageShareNotice("saved", "LINE")).not.toContain("シェアには");
     expect(imageShareNotice("failed", "Threads")).toBe("画像を用意できませんでした。");
   });
 });
