@@ -8,62 +8,66 @@ const quotaPossiblyLeft = (answers: Answers) =>
 const idleWhileQuotaOpen = (answers: Answers) =>
   answers.account !== "opened" || quotaPossiblyLeft(answers);
 
+const recurringOpen = (answers: Answers) =>
+  answers.account === "opened" &&
+  answers.frameUse !== "none" &&
+  quotaPossiblyLeft(answers);
+
 export const RULES: Rule[] = [
   {
     id: "no-account",
     severity: "loss",
     when: (answers) => answers.account === "none",
-    title: "NISA口座が開設されていません",
+    title: "口座が無いので、席がありません",
     detail:
-      "口座が無いと、つみたて投資枠（年120万円）も成長投資枠（年240万円）も使えません。\n\n未使用の年間枠は翌年に繰り越せないため、開設していない期間は非課税の恩恵を取りこぼしている可能性があります。",
+      "口座が無いと、つみたて投資枠も成長投資枠も使えません。未使用の年間枠は翌年に繰り越せません。今年中に開設して、枠を使える状態にしてください。",
   },
   {
     id: "planning-only",
     severity: "risk",
     when: (answers) => answers.account === "planning",
-    title: "開設の予定だけで、まだ枠を使えていません",
+    title: "開設予定のまま、席が空いています",
     detail:
-      "これから開設する場合、開設が終わるまで年間投資枠は使えません。未使用の年間枠は翌年に繰り越せません。\n\n開設が遅れると、今年の枠を取りこぼす可能性があります。進み具合を確認してほしい点です。",
+      "開設が終わるまで、今年の枠は使えません。未使用分は翌年に繰り越せません。手続きを進めて、今年中に枠へ入れる状態にしてください。",
   },
   {
     id: "unused-quota",
     severity: "loss",
     when: (answers) => answers.account === "opened" && answers.quotaUse === "none",
-    title: "今年の年間投資枠がほぼ未使用です",
+    title: "今年の枠、ほぼ空席です",
     detail:
-      "つみたて投資枠は年120万円、成長投資枠は年240万円、合計は年360万円です。未使用の年間枠は翌年に繰り越せません。\n\nほとんど使っていないと、今年の非課税枠を取りこぼしている可能性があります。",
+      "つみたて投資枠は年120万円、成長投資枠は年240万円です。ほとんど使っていないと、今年の席は年越しで消えます。今年中に使うかを見てください。何を買うかは述べません。",
   },
   {
     id: "partial-quota",
     severity: "risk",
     when: (answers) => answers.account === "opened" && answers.quotaUse === "some",
-    title: "今年の年間投資枠が半分程度しか使われていません",
+    title: "枠の半分が、まだ空いています",
     detail:
-      "年間枠の未使用分は翌年に繰り越せません。\n\n半分くらいの使用だと、残りの枠を取りこぼす可能性があります。残枠の有無を確認してほしい点です。",
+      "未使用分は翌年に繰り越せません。残りの席を今年中に使うかを見てください。",
   },
   {
     id: "unknown-quota",
     severity: "risk",
     when: (answers) => answers.account === "opened" && answers.quotaUse === "unknown",
-    title: "今年の年間投資枠をどれくらい使ったかわかりません",
+    title: "今年の枠、使ったか不明です",
     detail:
-      "使用量がわからないと、未使用のまま年を越していないかを判断できません。未使用の年間枠は翌年に繰り越せません。\n\n証券会社の画面で今年の残枠を確認してほしい点です。",
+      "残枠がわからないまま年を越すと、空席に気づけません。証券会社の画面で今年の残枠を見てください。",
   },
   {
     id: "idle-cash-lots",
     severity: "loss",
     when: (answers) => answers.idleCash === "lots" && idleWhileQuotaOpen(answers),
-    title: "投資するつもりのお金が、かなり預金のまま置かれています",
+    title: "投資したいお金が、預金で昼寝しています",
     detail:
-      "かなりの現金が預金のままだと、NISAの枠が空いている場合、非課税の置き場所を使えていない可能性があります。未使用の年間枠は翌年に繰り越せません。\n\n何を買うかは述べません。枠が空いていないかを確認してほしい点です。",
+      "かなりの現金が預金のままです。枠が空いているなら、預金のままにしないかを見てください。何をいくら買うかは述べません。",
   },
   {
     id: "idle-cash-some",
     severity: "risk",
     when: (answers) => answers.idleCash === "some" && idleWhileQuotaOpen(answers),
-    title: "投資するつもりのお金が、少し預金のまま残っています",
-    detail:
-      "投資するつもりで預金に置いていると、NISAの枠が残っている場合は非課税の恩恵を取りこぼす可能性があります。\n\n置き場所として枠が空いていないかを確認してほしい点です。",
+    title: "投資したいお金が、少し預金に残っています",
+    detail: "枠が残っているなら、その分を預金のままにしないかを見てください。",
   },
   {
     id: "taxable-while-quota-left",
@@ -72,32 +76,100 @@ export const RULES: Rule[] = [
       answers.taxableLeak === "yes" &&
       answers.account === "opened" &&
       quotaPossiblyLeft(answers),
-    title: "NISAの枠が残っているのに、NISAではない口座で買っています",
+    title: "枠が残っているのに、別口座で買っています",
     detail:
-      "年間枠が残っているのに、特定口座や一般口座など、NISAではない口座で買っていると、同じ買い付けでも非課税の恩恵を使えていない可能性があります。\n\nつみたて投資枠は年120万円、成長投資枠は年240万円です。\n\n枠の残量を確認してほしい点です。",
+      "特定口座や一般口座など、NISAではない口座で買うと、非課税の席を使いません。残枠があるうちは、NISAの口座側で買うかを見てください。銘柄は勧めません。",
   },
   {
     id: "frame-unsure",
     severity: "risk",
     when: (answers) => answers.account === "opened" && answers.frameUse === "unsure",
-    title: "つみたて投資枠と成長投資枠の違いが分かっていません",
+    title: "2つの枠の違いが、まだ曖昧です",
     detail:
-      "つみたて投資枠は年120万円、成長投資枠は年240万円です。\n\n枠の違いが分からないと、片方だけを使ったまま残枠を空にしたり、NISAではない口座で買ったりする可能性があります。\n\nどちらの枠を使っているかを確認してほしい点です。",
+      "つみたて投資枠は年120万円、成長投資枠は年240万円です。違いが曖昧だと、片方を空席のままにしがちです。どちらの枠を使っているかを見てください。",
   },
   {
     id: "growth-without-tsumitate",
     severity: "risk",
     when: (answers) => answers.account === "opened" && answers.frameUse === "growth",
-    title: "成長投資枠が中心で、つみたて投資枠の使用が見えません",
+    title: "成長投資枠ばかりで、つみたて側が静かです",
     detail:
-      "成長投資枠は年240万円、つみたて投資枠は年120万円です。成長投資枠が中心だと、つみたて投資枠が未使用のまま残っている可能性があります。\n\n未使用の年間枠は翌年に繰り越せません。両方の枠の使用状況を確認してほしい点です。",
+      "つみたて投資枠は年120万円です。空いたままだと、その分は年越しで消えます。つみたて側の残枠も見てください。",
   },
   {
     id: "opened-but-not-buying",
     severity: "risk",
     when: (answers) => answers.account === "opened" && answers.frameUse === "none",
-    title: "口座は開設していますが、まだ買っていません",
+    title: "口座はあるのに、まだ買っていません",
     detail:
-      "開設済みでも買っていなければ、今年の年間投資枠は未使用のままです。未使用の年間枠は翌年に繰り越せません。\n\n買い時や銘柄は述べません。枠が空いたままになっていないかを確認してほしい点です。",
+      "開設済みでも買っていなければ、今年の枠は空席です。未使用分は翌年に繰り越せません。今年中に枠を使うかを見てください。銘柄や買い時は述べません。",
+  },
+  {
+    id: "recurring-paused",
+    severity: "risk",
+    when: (answers) => recurringOpen(answers) && answers.recurring === "paused",
+    title: "つみたて、いったん停止中です",
+    detail:
+      "定期買付が止まっていると、今年の枠は静かに空きます。未使用分は翌年に繰り越せません。設定を戻すかを見てください。何を積むかは述べません。",
+  },
+  {
+    id: "recurring-never",
+    severity: "risk",
+    when: (answers) => recurringOpen(answers) && answers.recurring === "never",
+    title: "つみたての設定が、まだありません",
+    detail:
+      "設定が無いと、買付は記憶頼みです。今年の枠は年越しで消えます。動かすかを見てください。何を積むかは述べません。",
+  },
+  {
+    id: "recurring-unknown",
+    severity: "risk",
+    when: (answers) => recurringOpen(answers) && answers.recurring === "unknown",
+    title: "つみたてが動いているか、不明です",
+    detail:
+      "止まっていると、今年の枠は空いたまま年を越します。証券会社のつみたて設定を見てください。",
+  },
+  {
+    id: "sold-and-stopped",
+    severity: "loss",
+    when: (answers) => answers.account === "opened" && answers.soldThisYear === "stopped",
+    title: "売った分の席は、今年は戻りません",
+    detail:
+      "今年使った年間枠は、売っても戻ってきません。残枠があるなら、今年中に使うかを見てください。何を買い直すかは述べません。",
+  },
+  {
+    id: "broker-cash-lots",
+    severity: "loss",
+    when: (answers) => answers.brokerCash === "lots" && idleWhileQuotaOpen(answers),
+    title: "証券会社の中で、お金が昼寝しています",
+    detail:
+      "入金しただけでは、枠は減りません。買っていない現金は、預金のままと同じです。枠が空いているなら、入れたままにしないかを見てください。何を買うかは述べません。",
+  },
+  {
+    id: "broker-cash-some",
+    severity: "risk",
+    when: (answers) => answers.brokerCash === "some" && idleWhileQuotaOpen(answers),
+    title: "証券会社に、買い残しが少しあります",
+    detail:
+      "入金と買付は別です。残っているなら、枠が空いているうちに買うかを見てください。銘柄は勧めません。",
+  },
+  {
+    id: "other-broker",
+    severity: "loss",
+    when: (answers) =>
+      answers.account === "opened" &&
+      answers.sameBroker === "other" &&
+      quotaPossiblyLeft(answers),
+    title: "NISAと別の会社で、買っています",
+    detail:
+      "今年のNISAは、一つの証券会社だけです。別の会社での買付は、NISAの席を使いません。残枠があるなら、NISAを開いている会社で買うかを見てください。銘柄は勧めません。",
+  },
+  {
+    id: "dividend-taxed",
+    severity: "loss",
+    when: (answers) =>
+      answers.account === "opened" && answers.dividendRoute === "other",
+    title: "配当の受け取り方で、席を外れています",
+    detail:
+      "株式数比例配分方式以外だと、NISAの株の配当にも税金がかかることがあります。方式を証券会社で見てください。銘柄は勧めません。",
   },
 ];
