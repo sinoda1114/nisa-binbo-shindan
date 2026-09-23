@@ -67,6 +67,19 @@ function choiceButton(label: string, selected: boolean): HTMLButtonElement {
   return button;
 }
 
+function addChoices<Value extends string>(
+  list: HTMLElement,
+  choices: readonly { value: Value; label: string }[],
+  selected: Value | undefined,
+  choose: (value: Value) => void,
+) {
+  for (const choice of choices) {
+    const button = choiceButton(choice.label, selected === choice.value);
+    button.addEventListener("click", () => choose(choice.value));
+    list.append(button);
+  }
+}
+
 function appendChoices(
   question: Question,
   answers: Partial<Answers>,
@@ -75,130 +88,49 @@ function appendChoices(
 ) {
   switch (question.field) {
     case "purchasingPower":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.purchasingPower === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({
-            type: "choose",
-            field: "purchasingPower",
-            value: choice.value,
-          }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.purchasingPower, (value) =>
+        onChoose({ type: "choose", field: "purchasingPower", value }),
+      );
       return;
     case "compound":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.compound === choice.value);
-        button.addEventListener("click", () =>
-          onChoose({ type: "choose", field: "compound", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.compound, (value) =>
+        onChoose({ type: "choose", field: "compound", value }),
+      );
       return;
     case "depositCover":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.depositCover === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({
-            type: "choose",
-            field: "depositCover",
-            value: choice.value,
-          }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.depositCover, (value) =>
+        onChoose({ type: "choose", field: "depositCover", value }),
+      );
       return;
     case "accountFiling":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.accountFiling === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({
-            type: "choose",
-            field: "accountFiling",
-            value: choice.value,
-          }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.accountFiling, (value) =>
+        onChoose({ type: "choose", field: "accountFiling", value }),
+      );
       return;
     case "returnOfCapital":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.returnOfCapital === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({
-            type: "choose",
-            field: "returnOfCapital",
-            value: choice.value,
-          }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.returnOfCapital, (value) =>
+        onChoose({ type: "choose", field: "returnOfCapital", value }),
+      );
       return;
     case "nisaHolding":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.nisaHolding === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({
-            type: "choose",
-            field: "nisaHolding",
-            value: choice.value,
-          }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.nisaHolding, (value) =>
+        onChoose({ type: "choose", field: "nisaHolding", value }),
+      );
       return;
     case "pensionDeferral":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.pensionDeferral === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({
-            type: "choose",
-            field: "pensionDeferral",
-            value: choice.value,
-          }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.pensionDeferral, (value) =>
+        onChoose({ type: "choose", field: "pensionDeferral", value }),
+      );
       return;
     case "tsumitate":
-      for (const choice of question.choices) {
-        const button = choiceButton(
-          choice.label,
-          answers.tsumitate === choice.value,
-        );
-        button.addEventListener("click", () =>
-          onChoose({ type: "choose", field: "tsumitate", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.tsumitate, (value) =>
+        onChoose({ type: "choose", field: "tsumitate", value }),
+      );
       return;
     case "trustFee":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.trustFee === choice.value);
-        button.addEventListener("click", () =>
-          onChoose({ type: "choose", field: "trustFee", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.choices, answers.trustFee, (value) =>
+        onChoose({ type: "choose", field: "trustFee", value }),
+      );
       return;
     default: {
       const unreachable: never = question;
@@ -211,6 +143,7 @@ function fillShare(
   slot: HTMLElement,
   screen: Extract<Screen, { kind: "result" }>,
   dispatch: (event: Event) => void,
+  isActive: () => boolean,
 ) {
   const toggle = el("button", "btn btn-block", "シェア");
   toggle.type = "button";
@@ -235,7 +168,7 @@ function fillShare(
   const copy = el("button", "btn btn-choice", "リンクをコピー");
   copy.type = "button";
   copy.addEventListener("click", () => {
-    void copyLink(dispatch);
+    void copyLink(dispatch, isActive);
   });
   list.append(copy);
   slot.append(list);
@@ -254,9 +187,12 @@ function copyWithSelection(text: string): boolean {
   area.value = text;
   area.setAttribute("readonly", "");
   area.style.position = "fixed";
-  area.style.left = "-9999px";
+  area.style.left = "0";
+  area.style.top = "0";
+  area.style.opacity = "0";
   document.body.append(area);
-  area.select();
+  area.focus();
+  area.setSelectionRange(0, text.length);
   let copied = false;
   try {
     copied = document.execCommand("copy");
@@ -267,24 +203,35 @@ function copyWithSelection(text: string): boolean {
   return copied;
 }
 
-async function copyLink(dispatch: (event: Event) => void) {
+async function copyLink(
+  dispatch: (event: Event) => void,
+  isActive: () => boolean,
+) {
   const url = linkToCopy();
+  try {
+    await navigator.clipboard.writeText(url);
+    if (!isActive()) {
+      return;
+    }
+    dispatch({ type: "markCopy", note: "copied" });
+    return;
+  } catch {
+    if (!isActive()) {
+      return;
+    }
+  }
   if (copyWithSelection(url)) {
     dispatch({ type: "markCopy", note: "copied" });
     return;
   }
-  try {
-    await navigator.clipboard.writeText(url);
-    dispatch({ type: "markCopy", note: "copied" });
-  } catch {
-    dispatch({ type: "markCopy", note: "failed" });
-  }
+  dispatch({ type: "markCopy", note: "failed" });
 }
 
 function paintShare(
   root: HTMLElement,
   screen: Extract<Screen, { kind: "result" }>,
   dispatch: (event: Event) => void,
+  isActive: () => boolean,
 ) {
   const slot = root.querySelector("[data-share]");
   if (!(slot instanceof HTMLElement)) {
@@ -292,7 +239,7 @@ function paintShare(
   }
   const wasOpen = slot.querySelector("#literacy-share-list") !== null;
   slot.replaceChildren();
-  fillShare(slot, screen, dispatch);
+  fillShare(slot, screen, dispatch, isActive);
   const focusTarget = screen.shareOpen
     ? slot.querySelector("a, button.btn-choice")
     : slot.querySelector("button");
@@ -304,15 +251,24 @@ function paintShare(
 
 export function mountLiteracy(root: HTMLElement, options: MountOptions) {
   let screen = initialScreen();
+  let active = true;
+
+  function leave() {
+    active = false;
+    options.onExit();
+  }
 
   function dispatch(event: Event) {
+    if (!active) {
+      return;
+    }
     const previous = screen;
     screen = reduce(screen, event);
     if (
       previous.kind === "result" &&
       screen.kind === "result" &&
       previous.diagnosis === screen.diagnosis &&
-      paintShare(root, screen, dispatch)
+      paintShare(root, screen, dispatch, () => active)
     ) {
       return;
     }
@@ -338,7 +294,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     card.append(start);
     const back = el("button", "btn btn-block", "診断の選択に戻る");
     back.type = "button";
-    back.addEventListener("click", () => options.onExit());
+    back.addEventListener("click", () => leave());
     card.append(back);
     card.append(el("p", "disclaimer", DISCLAIMER));
     mountSheet(root, card, title);
@@ -396,7 +352,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     }
     const share = el("div", "share");
     share.setAttribute("data-share", "");
-    fillShare(share, screen, dispatch);
+    fillShare(share, screen, dispatch, () => active);
     card.append(share);
     const restart = el("button", "btn btn-primary", "もう一度はじめる");
     restart.type = "button";
@@ -404,7 +360,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     card.append(restart);
     const back = el("button", "btn btn-block", "診断の選択に戻る");
     back.type = "button";
-    back.addEventListener("click", () => options.onExit());
+    back.addEventListener("click", () => leave());
     card.append(back);
     card.append(el("p", "disclaimer", DISCLAIMER));
     mountSheet(root, card, stamp);

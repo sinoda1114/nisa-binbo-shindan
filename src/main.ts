@@ -44,23 +44,16 @@ const app = requireApp();
 
 let screen: Screen = { kind: "start" };
 
-type Gate = "home" | "nisa" | "literacy";
-
-let gate: Gate = "home";
-
 function openHome() {
-  gate = "home";
   renderHome();
 }
 
 function openNisa() {
-  gate = "nisa";
   screen = { kind: "start" };
   render();
 }
 
 function openLiteracy() {
-  gate = "literacy";
   mountLiteracy(app, { onExit: openHome });
 }
 
@@ -136,9 +129,6 @@ function applyChoice(current: Screen, event: ChooseEvent): Screen {
 }
 
 function dispatch(event: Event) {
-  if (gate !== "nisa") {
-    return;
-  }
   screen = reduce(screen, event);
   render();
 }
