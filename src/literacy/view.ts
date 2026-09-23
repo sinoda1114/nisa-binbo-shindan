@@ -1,3 +1,5 @@
+import { LITERACY_IMAGE_NAME } from "../result-image";
+import { mountSharePanel } from "../share-panel";
 import { PROVISIONAL_TITLE, QUESTIONS, TITLE_NOTE, type Question } from "./quiz";
 import { linkToCopy, shareTargets } from "./share";
 import {
@@ -5,7 +7,6 @@ import {
   reduce,
   type ChooseEvent,
   type Event,
-  type Screen,
 } from "./session";
 import type { Answers, Diagnosis, FindingSeverity, Verdict } from "./types";
 
@@ -139,116 +140,6 @@ function appendChoices(
   }
 }
 
-function fillShare(
-  slot: HTMLElement,
-  screen: Extract<Screen, { kind: "result" }>,
-  dispatch: (event: Event) => void,
-  isActive: () => boolean,
-) {
-  const toggle = el("button", "btn btn-block", "シェア");
-  toggle.type = "button";
-  toggle.setAttribute("aria-expanded", screen.shareOpen ? "true" : "false");
-  toggle.setAttribute("aria-controls", "literacy-share-list");
-  toggle.addEventListener("click", () => dispatch({ type: "toggleShare" }));
-  slot.append(toggle);
-  if (!screen.shareOpen) {
-    return;
-  }
-  const list = el("div", "choices");
-  list.id = "literacy-share-list";
-  list.setAttribute("role", "group");
-  list.setAttribute("aria-label", "シェア");
-  for (const target of shareTargets(screen.diagnosis.headline)) {
-    const link = el("a", "btn btn-choice", target.label);
-    link.href = target.href;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    list.append(link);
-  }
-  const copy = el("button", "btn btn-choice", "リンクをコピー");
-  copy.type = "button";
-  copy.addEventListener("click", () => {
-    void copyLink(dispatch, isActive);
-  });
-  list.append(copy);
-  slot.append(list);
-  if (screen.copyNote === "copied") {
-    slot.append(el("p", "facts", "リンクをコピーしました"));
-  }
-  if (screen.copyNote === "failed") {
-    slot.append(
-      el("p", "facts", `コピーできませんでした。${linkToCopy()}`),
-    );
-  }
-}
-
-function copyWithSelection(text: string): boolean {
-  const area = document.createElement("textarea");
-  area.value = text;
-  area.setAttribute("readonly", "");
-  area.style.position = "fixed";
-  area.style.left = "0";
-  area.style.top = "0";
-  area.style.opacity = "0";
-  document.body.append(area);
-  area.focus();
-  area.setSelectionRange(0, text.length);
-  let copied = false;
-  try {
-    copied = document.execCommand("copy");
-  } catch {
-    copied = false;
-  }
-  area.remove();
-  return copied;
-}
-
-async function copyLink(
-  dispatch: (event: Event) => void,
-  isActive: () => boolean,
-) {
-  const url = linkToCopy();
-  try {
-    await navigator.clipboard.writeText(url);
-    if (!isActive()) {
-      return;
-    }
-    dispatch({ type: "markCopy", note: "copied" });
-    return;
-  } catch {
-    if (!isActive()) {
-      return;
-    }
-  }
-  if (copyWithSelection(url)) {
-    dispatch({ type: "markCopy", note: "copied" });
-    return;
-  }
-  dispatch({ type: "markCopy", note: "failed" });
-}
-
-function paintShare(
-  root: HTMLElement,
-  screen: Extract<Screen, { kind: "result" }>,
-  dispatch: (event: Event) => void,
-  isActive: () => boolean,
-) {
-  const slot = root.querySelector("[data-share]");
-  if (!(slot instanceof HTMLElement)) {
-    return false;
-  }
-  const wasOpen = slot.querySelector("#literacy-share-list") !== null;
-  slot.replaceChildren();
-  fillShare(slot, screen, dispatch, isActive);
-  const focusTarget = screen.shareOpen
-    ? slot.querySelector("a, button.btn-choice")
-    : slot.querySelector("button");
-  if (focusTarget instanceof HTMLElement && wasOpen !== screen.shareOpen) {
-    focusTarget.focus({ preventScroll: true });
-  }
-  return true;
-}
-
 export function mountLiteracy(root: HTMLElement, options: MountOptions) {
   let screen = initialScreen();
   let active = true;
@@ -262,16 +153,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     if (!active) {
       return;
     }
-    const previous = screen;
     screen = reduce(screen, event);
-    if (
-      previous.kind === "result" &&
-      screen.kind === "result" &&
-      previous.diagnosis === screen.diagnosis &&
-      paintShare(root, screen, dispatch, () => active)
-    ) {
-      return;
-    }
     render();
   }
 
@@ -352,7 +234,6 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     }
     const share = el("div", "share");
     share.setAttribute("data-share", "");
-    fillShare(share, screen, dispatch, () => active);
     card.append(share);
     const restart = el("button", "btn btn-primary", "もう一度はじめる");
     restart.type = "button";
@@ -364,6 +245,16 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     card.append(back);
     card.append(el("p", "disclaimer", DISCLAIMER));
     mountSheet(root, card, stamp);
+    mountSharePanel(share, {
+      paper: card,
+      filename: LITERACY_IMAGE_NAME,
+      destinations: shareTargets(diagnosis.headline).map((target) => ({
+        id: target.id,
+        label: target.label,
+        href: target.href,
+      })),
+      linkText: linkToCopy(),
+    });
   }
 
   function render() {

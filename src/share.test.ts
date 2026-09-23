@@ -31,6 +31,8 @@ describe("shareHref", () => {
       expect(href).toContain(headline);
       expect(href).toContain(PUBLIC_URL);
       expect(href).not.toContain("taxableLeak");
+      expect(href).not.toContain("image/png");
+      expect(href).not.toContain("data:");
     }
   });
 });

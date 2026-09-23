@@ -230,6 +230,35 @@ body {
   background: rgb(28 20 14 / 0.05);
 }
 
+.btn-image {
+  width: 100%;
+  border: 2px solid var(--vermillion);
+  background: var(--paper);
+  color: var(--vermillion);
+  letter-spacing: 0.06em;
+}
+
+.btn-image:hover {
+  background: rgb(142 36 24 / 0.08);
+}
+
+.share-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.share-hint {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.share-copy.share-quiet {
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .share-list {
   list-style: none;
   margin: 0;
