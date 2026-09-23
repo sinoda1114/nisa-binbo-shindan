@@ -109,6 +109,18 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+function appendBlocks(parent: HTMLElement, className: string, text: string) {
+  const box = el("div", className);
+  for (const block of text.split(/\n\n+/)) {
+    const trimmed = block.trim();
+    if (trimmed.length === 0) {
+      continue;
+    }
+    box.append(el("p", undefined, trimmed));
+  }
+  parent.append(box);
+}
+
 function renderDisclaimer(parent: HTMLElement) {
   parent.append(el("p", "disclaimer", DISCLAIMER));
 }
@@ -252,13 +264,13 @@ function renderResult(diagnosis: Diagnosis) {
   card.append(runningHead());
   card.append(stamp);
   card.append(el("h1", "headline", diagnosis.headline));
-  card.append(el("p", "summary", diagnosis.summary));
+  appendBlocks(card, "summary", diagnosis.summary);
   if (diagnosis.findings.length > 0) {
     const list = el("div", "findings");
     for (const finding of diagnosis.findings) {
       const item = el("article", `finding finding-${finding.severity}`);
       item.append(el("h2", "finding-title", finding.title));
-      item.append(el("p", "finding-detail", finding.detail));
+      appendBlocks(item, "finding-detail", finding.detail);
       list.append(item);
     }
     card.append(list);

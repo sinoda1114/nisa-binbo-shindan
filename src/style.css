@@ -127,6 +127,18 @@ body {
   line-height: 1.75;
 }
 
+.summary,
+.finding-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.summary p,
+.finding-detail p {
+  margin: 0;
+}
+
 .facts,
 .disclaimer,
 .progress {
@@ -292,6 +304,25 @@ body {
     --margin-line: 1.35rem;
     padding: var(--space-6) var(--space-5) var(--space-6)
       calc(var(--margin-line) + var(--space-5));
+  }
+}
+
+@media (min-width: 960px) {
+  .desk {
+    padding: 3rem 3rem 4rem;
+  }
+
+  .panel.sheet {
+    max-width: 52rem;
+    gap: 1.75rem;
+  }
+
+  .findings {
+    gap: 1.25rem;
+  }
+
+  .finding {
+    padding: 1.25rem 1.5rem;
   }
 }
 
