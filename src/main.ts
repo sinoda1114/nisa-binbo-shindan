@@ -117,6 +117,7 @@ function mount(sheet: HTMLElement) {
   const desk = el("div", "desk");
   desk.append(sheet);
   app.replaceChildren(desk);
+  window.scrollTo(0, 0);
   const heading = sheet.querySelector("h1");
   if (heading instanceof HTMLElement) {
     heading.tabIndex = -1;
