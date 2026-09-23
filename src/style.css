@@ -356,6 +356,49 @@ body {
   color: var(--ok);
 }
 
+.result-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.result-marks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.result-marks .stamp {
+  margin-top: 0;
+}
+
+.result-badge,
+.result-character {
+  flex: none;
+  overflow: hidden;
+}
+
+.result-badge {
+  width: 4.25rem;
+  height: 4.25rem;
+  margin-left: var(--space-2);
+}
+
+.result-character {
+  width: 6.75rem;
+  height: 6.75rem;
+}
+
+.result-badge svg,
+.result-character svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .finding {
   border-radius: 2px;
   padding: var(--space-3) var(--space-4);
@@ -389,6 +432,23 @@ body {
     --margin-line: 1.35rem;
     padding: var(--space-6) var(--space-5) var(--space-6)
       calc(var(--margin-line) + var(--space-5));
+  }
+}
+
+@media (max-width: 420px) {
+  .result-head .stamp {
+    font-size: 1.45rem;
+    letter-spacing: 0.04em;
+  }
+
+  .result-badge {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .result-character {
+    width: 5.5rem;
+    height: 5.5rem;
   }
 }
 

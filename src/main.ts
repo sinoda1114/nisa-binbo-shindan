@@ -2,6 +2,7 @@ import { diagnose } from "./diagnosis/diagnose";
 import type { Answers, Diagnosis, Verdict } from "./diagnosis/types";
 import { mountLiteracy } from "./literacy/view";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
+import { resultHead } from "./result-art";
 import { NISA_IMAGE_NAME, noteClipboardPermission } from "./result-image";
 import { mountSharePanel } from "./share-panel";
 import { shareTargets } from "./share";
@@ -314,7 +315,7 @@ function renderResult(diagnosis: Diagnosis) {
     VERDICT_LABEL[diagnosis.verdict],
   );
   card.append(runningHead());
-  card.append(stamp);
+  card.append(resultHead(stamp, diagnosis.verdict));
   card.append(el("h1", "headline", diagnosis.headline));
   appendBlocks(card, "summary", diagnosis.summary);
   if (diagnosis.findings.length > 0) {
