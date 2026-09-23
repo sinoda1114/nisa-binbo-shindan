@@ -113,16 +113,13 @@ function renderDisclaimer(parent: HTMLElement) {
   parent.append(el("p", "disclaimer", DISCLAIMER));
 }
 
-function mount(sheet: HTMLElement) {
+function mount(sheet: HTMLElement, focusOn: HTMLElement) {
   const desk = el("div", "desk");
   desk.append(sheet);
   app.replaceChildren(desk);
   window.scrollTo(0, 0);
-  const heading = sheet.querySelector("h1");
-  if (heading instanceof HTMLElement) {
-    heading.tabIndex = -1;
-    heading.focus({ preventScroll: true });
-  }
+  focusOn.tabIndex = -1;
+  focusOn.focus({ preventScroll: true });
 }
 
 function runningHead(): HTMLElement {
@@ -131,8 +128,9 @@ function runningHead(): HTMLElement {
 
 function renderStart() {
   const card = el("section", "panel sheet");
+  const title = el("h1", "title", "NISA貧乏診断");
   card.append(el("p", "kicker", "家計簿の一ページ"));
-  card.append(el("h1", "title", "NISA貧乏診断"));
+  card.append(title);
   card.append(
     el(
       "p",
@@ -151,7 +149,7 @@ function renderStart() {
   start.addEventListener("click", () => dispatch({ type: "start" }));
   card.append(start);
   renderDisclaimer(card);
-  mount(card);
+  mount(card, title);
 }
 
 function choiceButton(label: string, selected: boolean): HTMLButtonElement {
@@ -236,23 +234,23 @@ function renderQuestion(index: number, answers: Partial<Answers>) {
     `${((index + 1) / QUESTIONS.length) * 100}%`,
   );
   card.append(meter);
-  card.append(el("h1", "question", question.prompt));
+  const heading = el("h1", "question", question.prompt);
+  card.append(heading);
   const list = el("div", "choices");
   appendChoices(question, answers, list);
   card.append(list);
-  mount(card);
+  mount(card, heading);
 }
 
 function renderResult(diagnosis: Diagnosis) {
   const card = el("section", "panel sheet");
-  card.append(runningHead());
-  card.append(
-    el(
-      "p",
-      `stamp verdict verdict-${diagnosis.verdict}`,
-      VERDICT_LABEL[diagnosis.verdict],
-    ),
+  const stamp = el(
+    "p",
+    `stamp verdict verdict-${diagnosis.verdict}`,
+    VERDICT_LABEL[diagnosis.verdict],
   );
+  card.append(runningHead());
+  card.append(stamp);
   card.append(el("h1", "headline", diagnosis.headline));
   card.append(el("p", "summary", diagnosis.summary));
   if (diagnosis.findings.length > 0) {
@@ -269,7 +267,7 @@ function renderResult(diagnosis: Diagnosis) {
   restart.addEventListener("click", () => dispatch({ type: "restart" }));
   card.append(restart);
   renderDisclaimer(card);
-  mount(card);
+  mount(card, stamp);
 }
 
 function render() {
