@@ -1,6 +1,7 @@
 import { diagnose } from "./diagnosis/diagnose";
 import type { Answers, Diagnosis, Verdict } from "./diagnosis/types";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
+import { shareHref, shareMessage, type ShareTarget } from "./share";
 import "./style.css";
 
 type Screen =
@@ -38,6 +39,13 @@ function requireApp(): HTMLElement {
   }
   return node;
 }
+
+const SHARE_LINKS: { target: ShareTarget; label: string }[] = [
+  { target: "x", label: "X" },
+  { target: "line", label: "LINE" },
+  { target: "facebook", label: "Facebook" },
+  { target: "threads", label: "Threads" },
+];
 
 const app = requireApp();
 
@@ -107,6 +115,18 @@ function el<K extends keyof HTMLElementTagNameMap>(
     node.textContent = text;
   }
   return node;
+}
+
+function appendBlocks(parent: HTMLElement, className: string, text: string) {
+  const box = el("div", className);
+  for (const block of text.split(/\n\n+/)) {
+    const trimmed = block.trim();
+    if (trimmed.length === 0) {
+      continue;
+    }
+    box.append(el("p", undefined, trimmed));
+  }
+  parent.append(box);
 }
 
 function renderDisclaimer(parent: HTMLElement) {
@@ -252,22 +272,116 @@ function renderResult(diagnosis: Diagnosis) {
   card.append(runningHead());
   card.append(stamp);
   card.append(el("h1", "headline", diagnosis.headline));
-  card.append(el("p", "summary", diagnosis.summary));
+  appendBlocks(card, "summary", diagnosis.summary);
   if (diagnosis.findings.length > 0) {
     const list = el("div", "findings");
     for (const finding of diagnosis.findings) {
       const item = el("article", `finding finding-${finding.severity}`);
       item.append(el("h2", "finding-title", finding.title));
-      item.append(el("p", "finding-detail", finding.detail));
+      appendBlocks(item, "finding-detail", finding.detail);
       list.append(item);
     }
     card.append(list);
   }
+  const shareButton = el("button", "btn btn-share", "シェア");
+  shareButton.type = "button";
+  shareButton.setAttribute("aria-expanded", "false");
+  shareButton.addEventListener("click", () => {
+    toggleShare(shareButton, diagnosis.headline);
+  });
+  card.append(shareButton);
   const restart = el("button", "btn btn-primary", "もう一度はじめる");
   restart.addEventListener("click", () => dispatch({ type: "restart" }));
   card.append(restart);
   renderDisclaimer(card);
   mount(card, stamp);
+}
+
+function toggleShare(shareButton: HTMLButtonElement, headline: string) {
+  const open = shareButton.getAttribute("aria-expanded") === "true";
+  if (open) {
+    const panel = shareButton.nextElementSibling;
+    if (panel instanceof HTMLElement && panel.classList.contains("share-panel")) {
+      panel.remove();
+    }
+    shareButton.setAttribute("aria-expanded", "false");
+    shareButton.removeAttribute("aria-controls");
+    shareButton.focus();
+    return;
+  }
+  const panel = renderShareList(headline);
+  shareButton.insertAdjacentElement("afterend", panel);
+  shareButton.setAttribute("aria-expanded", "true");
+  shareButton.setAttribute("aria-controls", "share-destinations");
+  const first = panel.querySelector("a");
+  if (first instanceof HTMLElement) {
+    first.focus();
+  }
+}
+
+function renderShareList(headline: string): HTMLElement {
+  const message = shareMessage(headline);
+  const panel = el("div", "share-panel");
+  const list = el("ul", "share-list");
+  list.id = "share-destinations";
+  for (const item of SHARE_LINKS) {
+    const row = el("li");
+    const link = el("a", "share-link", item.label);
+    link.href = shareHref(item.target, headline);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    row.append(link);
+    list.append(row);
+  }
+  const copyRow = el("li");
+  const copy = el("button", "share-copy", "リンクをコピー");
+  copy.type = "button";
+  const status = el("p", "share-status");
+  status.setAttribute("role", "status");
+  copy.addEventListener("click", () => {
+    void copyShareText(message, status, copy);
+  });
+  copyRow.append(copy);
+  list.append(copyRow);
+  panel.append(list);
+  panel.append(status);
+  return panel;
+}
+
+async function copyShareText(
+  message: string,
+  status: HTMLElement,
+  button: HTMLButtonElement,
+) {
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(message);
+    copied = true;
+  } catch {
+    copied = copyWithCommand(message);
+  }
+  status.textContent = copied ? "コピーしました" : "コピーできませんでした";
+  requestAnimationFrame(() => {
+    if (button.isConnected) {
+      button.focus();
+    }
+  });
+}
+
+function copyWithCommand(message: string): boolean {
+  const field = document.createElement("textarea");
+  field.value = message;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.top = "0";
+  field.style.left = "0";
+  field.style.opacity = "0";
+  document.body.append(field);
+  field.focus();
+  field.select();
+  const copied = document.execCommand("copy");
+  field.remove();
+  return copied;
 }
 
 function render() {

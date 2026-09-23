@@ -82,10 +82,11 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "taxableLeak",
-    prompt: "NISAの枠が残っているのに、課税口座で投資していますか。",
+    prompt:
+      "NISAの枠が残っているのに、NISAではない口座（特定口座や一般口座）で投資していますか。",
     choices: [
-      { value: "yes", label: "課税口座でも買っている" },
-      { value: "no", label: "課税口座では買っていない" },
+      { value: "yes", label: "NISAではない口座でも買っている" },
+      { value: "no", label: "NISAではない口座では買っていない" },
       { value: "unknown", label: "わからない" },
     ],
   },
