@@ -39,7 +39,6 @@ describe("literacy session", () => {
     if (finished.kind !== "result") {
       return;
     }
-    expect(finished.shareOpen).toBe(false);
     expect(finished.diagnosis.verdict).toBe("solid");
     expect(finished.answers).toEqual(SOLID);
   });
@@ -65,33 +64,12 @@ describe("literacy session", () => {
     });
   });
 
-  it("opens and closes the share list without changing the diagnosis", () => {
+  it("restarts from the result and drops it", () => {
     const finished = chooseAll(initialScreen());
-    const opened = reduce(finished, { type: "toggleShare" });
-    expect(opened.kind).toBe("result");
-    if (opened.kind !== "result" || finished.kind !== "result") {
+    expect(finished.kind).toBe("result");
+    if (finished.kind !== "result") {
       return;
     }
-    expect(opened.shareOpen).toBe(true);
-    expect(opened.diagnosis).toBe(finished.diagnosis);
-    const noted = reduce(opened, { type: "markCopy", note: "copied" });
-    if (noted.kind !== "result") {
-      return;
-    }
-    expect(noted.copyNote).toBe("copied");
-    expect(noted.shareOpen).toBe(true);
-    const closed = reduce(noted, { type: "toggleShare" });
-    if (closed.kind !== "result") {
-      return;
-    }
-    expect(closed.shareOpen).toBe(false);
-    expect(closed.copyNote).toBe("idle");
-    expect(reduce(closed, { type: "restart" })).toEqual({ kind: "intro" });
-  });
-
-  it("ignores share actions before the result", () => {
-    const intro = initialScreen();
-    expect(reduce(intro, { type: "toggleShare" })).toBe(intro);
-    expect(reduce(intro, { type: "markCopy", note: "failed" })).toBe(intro);
+    expect(reduce(finished, { type: "restart" })).toEqual({ kind: "intro" });
   });
 });

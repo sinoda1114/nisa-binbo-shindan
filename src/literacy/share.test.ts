@@ -57,6 +57,11 @@ describe("literacy share", () => {
       "https://www.threads.net/intent/post",
     );
     expect(threads.searchParams.get("text")).toBe(message);
+
+    const packed = targets.map((target) => target.href).join(" ");
+    expect(packed).not.toContain("image/png");
+    expect(packed).not.toContain("data:");
+    expect(packed).not.toMatch(/[?&](media|image|attachment)=/);
   });
 
   it("does not put a diagnosed answer payload into the share links", () => {

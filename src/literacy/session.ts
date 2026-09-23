@@ -2,8 +2,6 @@ import { diagnose } from "./diagnose";
 import { QUESTIONS, isComplete } from "./quiz";
 import type { Answers, Diagnosis } from "./types";
 
-export type CopyNote = "idle" | "copied" | "failed";
-
 export type Screen =
   | { kind: "intro" }
   | { kind: "question"; index: number; answers: Partial<Answers> }
@@ -11,8 +9,6 @@ export type Screen =
       kind: "result";
       answers: Answers;
       diagnosis: Diagnosis;
-      shareOpen: boolean;
-      copyNote: CopyNote;
     };
 
 export type ChooseEvent = {
@@ -27,8 +23,6 @@ export type Event =
   | { type: "start" }
   | { type: "back" }
   | { type: "restart" }
-  | { type: "toggleShare" }
-  | { type: "markCopy"; note: Exclude<CopyNote, "idle"> }
   | ChooseEvent;
 
 export function initialScreen(): Screen {
@@ -45,10 +39,6 @@ export function reduce(current: Screen, event: Event): Screen {
       return goBack(current);
     case "choose":
       return applyChoice(current, event);
-    case "toggleShare":
-      return toggleShare(current);
-    case "markCopy":
-      return markCopy(current, event.note);
     default: {
       const unreachable: never = event;
       return unreachable;
@@ -86,25 +76,5 @@ function applyChoice(current: Screen, event: ChooseEvent): Screen {
     kind: "result",
     answers,
     diagnosis: diagnose(answers),
-    shareOpen: false,
-    copyNote: "idle",
   };
-}
-
-function toggleShare(current: Screen): Screen {
-  if (current.kind !== "result") {
-    return current;
-  }
-  return {
-    ...current,
-    shareOpen: !current.shareOpen,
-    copyNote: "idle",
-  };
-}
-
-function markCopy(current: Screen, note: Exclude<CopyNote, "idle">): Screen {
-  if (current.kind !== "result") {
-    return current;
-  }
-  return { ...current, copyNote: note };
 }
