@@ -1,0 +1,432 @@
+import { PROVISIONAL_TITLE, QUESTIONS, TITLE_NOTE, type Question } from "./quiz";
+import { linkToCopy, shareTargets } from "./share";
+import {
+  initialScreen,
+  reduce,
+  type ChooseEvent,
+  type Event,
+  type Screen,
+} from "./session";
+import type { Answers, Diagnosis, FindingSeverity, Verdict } from "./types";
+
+const DISCLAIMER =
+  "この診断は教育目的の目安です。投資助言でも税務助言でもありません。銘柄や金額は勧めません。税額は計算しません。回答は保存しません。タイトルは仮のものです。";
+
+const VERDICT_LABEL: Record<Verdict, string> = {
+  gap: "誤解がありそうです",
+  shaky: "確認した方がよさそうです",
+  solid: "概ね合っています",
+};
+
+const STAMP_CLASS: Record<Verdict, string> = {
+  gap: "verdict-loss",
+  shaky: "verdict-risky",
+  solid: "verdict-ok",
+};
+
+const FINDING_CLASS: Record<FindingSeverity, string> = {
+  gap: "finding-loss",
+  shaky: "finding-risk",
+};
+
+type MountOptions = {
+  onExit: () => void;
+};
+
+function el<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  className?: string,
+  text?: string,
+): HTMLElementTagNameMap[K] {
+  const node = document.createElement(tag);
+  if (className) {
+    node.className = className;
+  }
+  if (text !== undefined) {
+    node.textContent = text;
+  }
+  return node;
+}
+
+function mountSheet(root: HTMLElement, sheet: HTMLElement, focusOn: HTMLElement) {
+  const desk = el("div", "desk");
+  desk.append(sheet);
+  root.replaceChildren(desk);
+  window.scrollTo(0, 0);
+  focusOn.tabIndex = -1;
+  focusOn.focus({ preventScroll: true });
+}
+
+function choiceButton(label: string, selected: boolean): HTMLButtonElement {
+  const button = el(
+    "button",
+    selected ? "btn btn-choice is-selected" : "btn btn-choice",
+    label,
+  );
+  button.type = "button";
+  return button;
+}
+
+function appendChoices(
+  question: Question,
+  answers: Partial<Answers>,
+  list: HTMLElement,
+  onChoose: (event: ChooseEvent) => void,
+) {
+  switch (question.field) {
+    case "purchasingPower":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.purchasingPower === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({
+            type: "choose",
+            field: "purchasingPower",
+            value: choice.value,
+          }),
+        );
+        list.append(button);
+      }
+      return;
+    case "compound":
+      for (const choice of question.choices) {
+        const button = choiceButton(choice.label, answers.compound === choice.value);
+        button.addEventListener("click", () =>
+          onChoose({ type: "choose", field: "compound", value: choice.value }),
+        );
+        list.append(button);
+      }
+      return;
+    case "depositCover":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.depositCover === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({
+            type: "choose",
+            field: "depositCover",
+            value: choice.value,
+          }),
+        );
+        list.append(button);
+      }
+      return;
+    case "accountFiling":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.accountFiling === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({
+            type: "choose",
+            field: "accountFiling",
+            value: choice.value,
+          }),
+        );
+        list.append(button);
+      }
+      return;
+    case "returnOfCapital":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.returnOfCapital === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({
+            type: "choose",
+            field: "returnOfCapital",
+            value: choice.value,
+          }),
+        );
+        list.append(button);
+      }
+      return;
+    case "nisaHolding":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.nisaHolding === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({
+            type: "choose",
+            field: "nisaHolding",
+            value: choice.value,
+          }),
+        );
+        list.append(button);
+      }
+      return;
+    case "pensionDeferral":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.pensionDeferral === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({
+            type: "choose",
+            field: "pensionDeferral",
+            value: choice.value,
+          }),
+        );
+        list.append(button);
+      }
+      return;
+    case "tsumitate":
+      for (const choice of question.choices) {
+        const button = choiceButton(
+          choice.label,
+          answers.tsumitate === choice.value,
+        );
+        button.addEventListener("click", () =>
+          onChoose({ type: "choose", field: "tsumitate", value: choice.value }),
+        );
+        list.append(button);
+      }
+      return;
+    case "trustFee":
+      for (const choice of question.choices) {
+        const button = choiceButton(choice.label, answers.trustFee === choice.value);
+        button.addEventListener("click", () =>
+          onChoose({ type: "choose", field: "trustFee", value: choice.value }),
+        );
+        list.append(button);
+      }
+      return;
+    default: {
+      const unreachable: never = question;
+      throw new Error(`設問がありません: ${JSON.stringify(unreachable)}`);
+    }
+  }
+}
+
+function fillShare(
+  slot: HTMLElement,
+  screen: Extract<Screen, { kind: "result" }>,
+  dispatch: (event: Event) => void,
+) {
+  const toggle = el("button", "btn btn-block", "シェア");
+  toggle.type = "button";
+  toggle.setAttribute("aria-expanded", screen.shareOpen ? "true" : "false");
+  toggle.setAttribute("aria-controls", "literacy-share-list");
+  toggle.addEventListener("click", () => dispatch({ type: "toggleShare" }));
+  slot.append(toggle);
+  if (!screen.shareOpen) {
+    return;
+  }
+  const list = el("div", "choices");
+  list.id = "literacy-share-list";
+  list.setAttribute("role", "group");
+  list.setAttribute("aria-label", "シェア");
+  for (const target of shareTargets(screen.diagnosis.headline)) {
+    const link = el("a", "btn btn-choice", target.label);
+    link.href = target.href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    list.append(link);
+  }
+  const copy = el("button", "btn btn-choice", "リンクをコピー");
+  copy.type = "button";
+  copy.addEventListener("click", () => {
+    void copyLink(dispatch);
+  });
+  list.append(copy);
+  slot.append(list);
+  if (screen.copyNote === "copied") {
+    slot.append(el("p", "facts", "リンクをコピーしました"));
+  }
+  if (screen.copyNote === "failed") {
+    slot.append(
+      el("p", "facts", `コピーできませんでした。${linkToCopy()}`),
+    );
+  }
+}
+
+function copyWithSelection(text: string): boolean {
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.left = "-9999px";
+  document.body.append(area);
+  area.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+  area.remove();
+  return copied;
+}
+
+async function copyLink(dispatch: (event: Event) => void) {
+  const url = linkToCopy();
+  if (copyWithSelection(url)) {
+    dispatch({ type: "markCopy", note: "copied" });
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    dispatch({ type: "markCopy", note: "copied" });
+  } catch {
+    dispatch({ type: "markCopy", note: "failed" });
+  }
+}
+
+function paintShare(
+  root: HTMLElement,
+  screen: Extract<Screen, { kind: "result" }>,
+  dispatch: (event: Event) => void,
+) {
+  const slot = root.querySelector("[data-share]");
+  if (!(slot instanceof HTMLElement)) {
+    return false;
+  }
+  const wasOpen = slot.querySelector("#literacy-share-list") !== null;
+  slot.replaceChildren();
+  fillShare(slot, screen, dispatch);
+  const focusTarget = screen.shareOpen
+    ? slot.querySelector("a, button.btn-choice")
+    : slot.querySelector("button");
+  if (focusTarget instanceof HTMLElement && wasOpen !== screen.shareOpen) {
+    focusTarget.focus({ preventScroll: true });
+  }
+  return true;
+}
+
+export function mountLiteracy(root: HTMLElement, options: MountOptions) {
+  let screen = initialScreen();
+
+  function dispatch(event: Event) {
+    const previous = screen;
+    screen = reduce(screen, event);
+    if (
+      previous.kind === "result" &&
+      screen.kind === "result" &&
+      previous.diagnosis === screen.diagnosis &&
+      paintShare(root, screen, dispatch)
+    ) {
+      return;
+    }
+    render();
+  }
+
+  function renderIntro() {
+    const card = el("section", "panel sheet");
+    const title = el("h1", "title", PROVISIONAL_TITLE);
+    card.append(el("p", "kicker", "家計簿の一ページ"));
+    card.append(title);
+    card.append(el("p", "facts", TITLE_NOTE));
+    card.append(
+      el(
+        "p",
+        "lead",
+        "制度の数字、口座の種類、税金の扱い、よくある誤解を質問で確認します。NISAの使い方の取りこぼしを見る診断とは別です。",
+      ),
+    );
+    const start = el("button", "btn btn-primary", "診断をはじめる");
+    start.type = "button";
+    start.addEventListener("click", () => dispatch({ type: "start" }));
+    card.append(start);
+    const back = el("button", "btn btn-block", "診断の選択に戻る");
+    back.type = "button";
+    back.addEventListener("click", () => options.onExit());
+    card.append(back);
+    card.append(el("p", "disclaimer", DISCLAIMER));
+    mountSheet(root, card, title);
+  }
+
+  function renderQuestion(index: number, answers: Partial<Answers>) {
+    const question = QUESTIONS[index];
+    if (!question) {
+      throw new Error("設問がありません");
+    }
+    const card = el("section", "panel sheet");
+    card.append(el("p", "running", PROVISIONAL_TITLE));
+    const nav = el("div", "nav");
+    const back = el("button", "btn btn-ghost", "戻る");
+    back.type = "button";
+    back.addEventListener("click", () => dispatch({ type: "back" }));
+    nav.append(back);
+    nav.append(el("p", "progress", `${index + 1}/${QUESTIONS.length}`));
+    card.append(nav);
+    const meter = el("div", "meter");
+    meter.setAttribute("aria-hidden", "true");
+    meter.style.setProperty("--fill", `${((index + 1) / QUESTIONS.length) * 100}%`);
+    card.append(meter);
+    const heading = el("h1", "question", question.prompt);
+    card.append(heading);
+    const list = el("div", "choices");
+    appendChoices(question, answers, list, dispatch);
+    card.append(list);
+    mountSheet(root, card, heading);
+  }
+
+  function renderResult(diagnosis: Diagnosis) {
+    if (screen.kind !== "result") {
+      return;
+    }
+    const card = el("section", "panel sheet");
+    const stamp = el(
+      "p",
+      `stamp verdict ${STAMP_CLASS[diagnosis.verdict]}`,
+      VERDICT_LABEL[diagnosis.verdict],
+    );
+    card.append(el("p", "running", PROVISIONAL_TITLE));
+    card.append(stamp);
+    card.append(el("h1", "headline", diagnosis.headline));
+    card.append(el("p", "summary", diagnosis.summary));
+    if (diagnosis.findings.length > 0) {
+      const list = el("div", "findings");
+      for (const finding of diagnosis.findings) {
+        const item = el("article", `finding ${FINDING_CLASS[finding.severity]}`);
+        item.append(el("h2", "finding-title", finding.title));
+        item.append(el("p", "finding-detail", finding.detail));
+        list.append(item);
+      }
+      card.append(list);
+    }
+    const share = el("div", "share");
+    share.setAttribute("data-share", "");
+    fillShare(share, screen, dispatch);
+    card.append(share);
+    const restart = el("button", "btn btn-primary", "もう一度はじめる");
+    restart.type = "button";
+    restart.addEventListener("click", () => dispatch({ type: "restart" }));
+    card.append(restart);
+    const back = el("button", "btn btn-block", "診断の選択に戻る");
+    back.type = "button";
+    back.addEventListener("click", () => options.onExit());
+    card.append(back);
+    card.append(el("p", "disclaimer", DISCLAIMER));
+    mountSheet(root, card, stamp);
+  }
+
+  function render() {
+    switch (screen.kind) {
+      case "intro":
+        renderIntro();
+        return;
+      case "question":
+        renderQuestion(screen.index, screen.answers);
+        return;
+      case "result":
+        renderResult(screen.diagnosis);
+        return;
+      default: {
+        const unreachable: never = screen;
+        throw new Error(`画面がありません: ${JSON.stringify(unreachable)}`);
+      }
+    }
+  }
+
+  render();
+}

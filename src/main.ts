@@ -1,5 +1,6 @@
 import { diagnose } from "./diagnosis/diagnose";
 import type { Answers, Diagnosis, Verdict } from "./diagnosis/types";
+import { mountLiteracy } from "./literacy/view";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
 import "./style.css";
 
@@ -42,6 +43,51 @@ function requireApp(): HTMLElement {
 const app = requireApp();
 
 let screen: Screen = { kind: "start" };
+
+type Gate = "home" | "nisa" | "literacy";
+
+let gate: Gate = "home";
+
+function openHome() {
+  gate = "home";
+  renderHome();
+}
+
+function openNisa() {
+  gate = "nisa";
+  screen = { kind: "start" };
+  render();
+}
+
+function openLiteracy() {
+  gate = "literacy";
+  mountLiteracy(app, { onExit: openHome });
+}
+
+function renderHome() {
+  const card = el("section", "panel sheet");
+  const title = el("h1", "title", "診断を選ぶ");
+  card.append(el("p", "kicker", "家計簿の一ページ"));
+  card.append(title);
+  card.append(
+    el(
+      "p",
+      "lead",
+      "NISAの使い方の取りこぼしと、制度の理解は、別の診断です。",
+    ),
+  );
+  const nisa = el("button", "btn btn-primary", "NISA貧乏診断");
+  nisa.type = "button";
+  nisa.addEventListener("click", () => openNisa());
+  card.append(nisa);
+  const literacy = el("button", "btn btn-block", "金融リテラシー診断（仮）");
+  literacy.type = "button";
+  literacy.addEventListener("click", () => openLiteracy());
+  card.append(literacy);
+  card.append(el("p", "facts", "金融リテラシー診断のタイトルは仮のものです。"));
+  renderDisclaimer(card);
+  mount(card, title);
+}
 
 function reduce(current: Screen, event: Event): Screen {
   switch (event.type) {
@@ -90,6 +136,9 @@ function applyChoice(current: Screen, event: ChooseEvent): Screen {
 }
 
 function dispatch(event: Event) {
+  if (gate !== "nisa") {
+    return;
+  }
   screen = reduce(screen, event);
   render();
 }
@@ -146,8 +195,13 @@ function renderStart() {
     ),
   );
   const start = el("button", "btn btn-primary", "診断をはじめる");
+  start.type = "button";
   start.addEventListener("click", () => dispatch({ type: "start" }));
   card.append(start);
+  const backHome = el("button", "btn btn-block", "診断の選択に戻る");
+  backHome.type = "button";
+  backHome.addEventListener("click", () => openHome());
+  card.append(backHome);
   renderDisclaimer(card);
   mount(card, title);
 }
@@ -284,4 +338,4 @@ function render() {
   }
 }
 
-render();
+openHome();
