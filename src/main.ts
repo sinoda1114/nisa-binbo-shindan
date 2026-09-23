@@ -4,7 +4,8 @@ import { mountLiteracy } from "./literacy/view";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
 import { NISA_IMAGE_NAME, noteClipboardPermission } from "./result-image";
 import { mountSharePanel } from "./share-panel";
-import { shareHref, shareMessage, type ShareTarget } from "./share";
+import { shareTargets } from "./share";
+import { linkToCopy } from "./share-destinations";
 import "./style.css";
 
 type Screen =
@@ -42,13 +43,6 @@ function requireApp(): HTMLElement {
   }
   return node;
 }
-
-const SHARE_LINKS: { target: ShareTarget; label: string }[] = [
-  { target: "x", label: "X" },
-  { target: "line", label: "LINE" },
-  { target: "facebook", label: "Facebook" },
-  { target: "threads", label: "Threads" },
-];
 
 const app = requireApp();
 
@@ -345,12 +339,8 @@ function renderResult(diagnosis: Diagnosis) {
   mountSharePanel(share, {
     paper: card,
     filename: NISA_IMAGE_NAME,
-    destinations: SHARE_LINKS.map((item) => ({
-      id: item.target,
-      label: item.label,
-      href: shareHref(item.target, diagnosis.headline),
-    })),
-    linkText: shareMessage(diagnosis.headline),
+    destinations: shareTargets(diagnosis.verdict),
+    linkText: linkToCopy(),
   });
 }
 

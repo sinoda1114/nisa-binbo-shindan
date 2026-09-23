@@ -248,11 +248,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     mountSharePanel(share, {
       paper: card,
       filename: LITERACY_IMAGE_NAME,
-      destinations: shareTargets(diagnosis.headline).map((target) => ({
-        id: target.id,
-        label: target.label,
-        href: target.href,
-      })),
+      destinations: shareTargets(diagnosis.verdict),
       linkText: linkToCopy(),
     });
   }
