@@ -2,6 +2,7 @@ import { diagnose } from "./diagnosis/diagnose";
 import type { Answers, Diagnosis, Verdict } from "./diagnosis/types";
 import { mountLiteracy } from "./literacy/view";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
+import { resultBadge, resultCharacter } from "./result-art";
 import { NISA_IMAGE_NAME, noteClipboardPermission } from "./result-image";
 import { mountSharePanel } from "./share-panel";
 import { shareTargets } from "./share";
@@ -313,8 +314,12 @@ function renderResult(diagnosis: Diagnosis) {
     `stamp verdict verdict-${diagnosis.verdict}`,
     VERDICT_LABEL[diagnosis.verdict],
   );
+  const head = el("div", "result-head");
+  const marks = el("div", "result-marks");
+  marks.append(stamp, resultBadge(diagnosis.verdict));
+  head.append(marks, resultCharacter(diagnosis.verdict));
   card.append(runningHead());
-  card.append(stamp);
+  card.append(head);
   card.append(el("h1", "headline", diagnosis.headline));
   appendBlocks(card, "summary", diagnosis.summary);
   if (diagnosis.findings.length > 0) {
