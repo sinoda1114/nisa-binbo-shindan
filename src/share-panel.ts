@@ -83,6 +83,7 @@ export function mountSharePanel(
       capture = captureResultPng(options.paper)
         .then((blob) => {
           captured = blob;
+          setBusy(busy);
           return blob;
         })
         .catch((error: unknown) => {
@@ -102,9 +103,11 @@ export function mountSharePanel(
   function setBusy(value: boolean) {
     busy = value;
     slot.querySelectorAll("button").forEach((node) => {
-      if (node instanceof HTMLButtonElement) {
-        node.disabled = value;
+      if (!(node instanceof HTMLButtonElement)) {
+        return;
       }
+      const waitsForImage = node.classList.contains("share-link");
+      node.disabled = value || (waitsForImage && captured === null);
     });
   }
 
@@ -205,6 +208,7 @@ export function mountSharePanel(
         const row = el("li");
         const button = el("button", "share-link", pastePlaceLabel(destination.label));
         button.type = "button";
+        button.disabled = captured === null;
         button.setAttribute("data-share-action", destination.id);
         button.addEventListener("click", () => {
           publishImage(destination.label, destination.href, button);
@@ -238,5 +242,7 @@ export function mountSharePanel(
   }
 
   paint();
-  void beginCapture();
+  void beginCapture().catch(() => {
+    showNotice(imageShareNotice("failed", ""));
+  });
 }
