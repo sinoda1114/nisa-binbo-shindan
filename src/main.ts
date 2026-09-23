@@ -224,6 +224,21 @@ function choiceButton(label: string, selected: boolean): HTMLButtonElement {
   );
 }
 
+function addChoices<Field extends keyof Answers>(
+  list: HTMLElement,
+  field: Field,
+  choices: readonly { value: Answers[Field]; label: string }[],
+  selected: Answers[Field] | undefined,
+) {
+  for (const choice of choices) {
+    const button = choiceButton(choice.label, selected === choice.value);
+    button.addEventListener("click", () =>
+      dispatch({ type: "choose", field, value: choice.value } as ChooseEvent),
+    );
+    list.append(button);
+  }
+}
+
 function appendChoices(
   question: Question,
   answers: Partial<Answers>,
@@ -231,50 +246,39 @@ function appendChoices(
 ) {
   switch (question.field) {
     case "account":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.account === choice.value);
-        button.addEventListener("click", () =>
-          dispatch({ type: "choose", field: "account", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.field, question.choices, answers.account);
       return;
     case "quotaUse":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.quotaUse === choice.value);
-        button.addEventListener("click", () =>
-          dispatch({ type: "choose", field: "quotaUse", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.field, question.choices, answers.quotaUse);
       return;
     case "frameUse":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.frameUse === choice.value);
-        button.addEventListener("click", () =>
-          dispatch({ type: "choose", field: "frameUse", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.field, question.choices, answers.frameUse);
+      return;
+    case "recurring":
+      addChoices(list, question.field, question.choices, answers.recurring);
+      return;
+    case "soldThisYear":
+      addChoices(list, question.field, question.choices, answers.soldThisYear);
       return;
     case "idleCash":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.idleCash === choice.value);
-        button.addEventListener("click", () =>
-          dispatch({ type: "choose", field: "idleCash", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.field, question.choices, answers.idleCash);
+      return;
+    case "brokerCash":
+      addChoices(list, question.field, question.choices, answers.brokerCash);
       return;
     case "taxableLeak":
-      for (const choice of question.choices) {
-        const button = choiceButton(choice.label, answers.taxableLeak === choice.value);
-        button.addEventListener("click", () =>
-          dispatch({ type: "choose", field: "taxableLeak", value: choice.value }),
-        );
-        list.append(button);
-      }
+      addChoices(list, question.field, question.choices, answers.taxableLeak);
       return;
+    case "sameBroker":
+      addChoices(list, question.field, question.choices, answers.sameBroker);
+      return;
+    case "dividendRoute":
+      addChoices(list, question.field, question.choices, answers.dividendRoute);
+      return;
+    default: {
+      const unreachable: never = question;
+      return unreachable;
+    }
   }
 }
 
