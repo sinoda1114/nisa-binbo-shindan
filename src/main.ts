@@ -1,6 +1,7 @@
 import { diagnose } from "./diagnosis/diagnose";
 import type { Answers, Diagnosis, Verdict } from "./diagnosis/types";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
+import { shareHref, shareMessage, type ShareTarget } from "./share";
 import "./style.css";
 
 type Screen =
@@ -39,9 +40,18 @@ function requireApp(): HTMLElement {
   return node;
 }
 
+const SHARE_LINKS: { target: ShareTarget; label: string }[] = [
+  { target: "x", label: "X" },
+  { target: "line", label: "LINE" },
+  { target: "facebook", label: "Facebook" },
+  { target: "threads", label: "Threads" },
+];
+
 const app = requireApp();
 
 let screen: Screen = { kind: "start" };
+let shareOpen = false;
+let shareFocus: "stamp" | "button" | "list" = "stamp";
 
 function reduce(current: Screen, event: Event): Screen {
   switch (event.type) {
@@ -90,7 +100,12 @@ function applyChoice(current: Screen, event: ChooseEvent): Screen {
 }
 
 function dispatch(event: Event) {
+  const previous = screen.kind;
   screen = reduce(screen, event);
+  if (screen.kind !== "result" || previous !== "result") {
+    shareOpen = false;
+    shareFocus = "stamp";
+  }
   render();
 }
 
@@ -275,11 +290,99 @@ function renderResult(diagnosis: Diagnosis) {
     }
     card.append(list);
   }
+  const shareButton = el("button", "btn btn-share", "シェア");
+  shareButton.type = "button";
+  shareButton.setAttribute("aria-expanded", shareOpen ? "true" : "false");
+  if (shareOpen) {
+    shareButton.setAttribute("aria-controls", "share-destinations");
+  }
+  shareButton.addEventListener("click", () => {
+    shareOpen = !shareOpen;
+    shareFocus = shareOpen ? "list" : "button";
+    render();
+  });
+  card.append(shareButton);
+  const list = shareOpen ? renderShareList(diagnosis.headline) : null;
+  if (list) {
+    card.append(list);
+  }
   const restart = el("button", "btn btn-primary", "もう一度はじめる");
   restart.addEventListener("click", () => dispatch({ type: "restart" }));
   card.append(restart);
   renderDisclaimer(card);
-  mount(card, stamp);
+  const listFocus = list?.querySelector("a");
+  const focusOn =
+    shareFocus === "list" && listFocus instanceof HTMLElement
+      ? listFocus
+      : shareFocus === "button"
+        ? shareButton
+        : stamp;
+  mount(card, focusOn);
+}
+
+function renderShareList(headline: string): HTMLElement {
+  const message = shareMessage(headline);
+  const panel = el("div", "share-panel");
+  const list = el("ul", "share-list");
+  list.id = "share-destinations";
+  for (const item of SHARE_LINKS) {
+    const row = el("li");
+    const link = el("a", "share-link", item.label);
+    link.href = shareHref(item.target, headline);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    row.append(link);
+    list.append(row);
+  }
+  const copyRow = el("li");
+  const copy = el("button", "share-copy", "リンクをコピー");
+  copy.type = "button";
+  const status = el("p", "share-status");
+  status.setAttribute("role", "status");
+  copy.addEventListener("click", () => {
+    void copyShareText(message, status, copy);
+  });
+  copyRow.append(copy);
+  list.append(copyRow);
+  panel.append(list);
+  panel.append(status);
+  return panel;
+}
+
+async function copyShareText(
+  message: string,
+  status: HTMLElement,
+  button: HTMLButtonElement,
+) {
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(message);
+    copied = true;
+  } catch {
+    copied = copyWithCommand(message);
+  }
+  status.textContent = copied ? "コピーしました" : "コピーできませんでした";
+  requestAnimationFrame(() => {
+    if (button.isConnected) {
+      button.focus();
+    }
+  });
+}
+
+function copyWithCommand(message: string): boolean {
+  const field = document.createElement("textarea");
+  field.value = message;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.top = "0";
+  field.style.left = "0";
+  field.style.opacity = "0";
+  document.body.append(field);
+  field.focus();
+  field.select();
+  const copied = document.execCommand("copy");
+  field.remove();
+  return copied;
 }
 
 function render() {
