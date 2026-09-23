@@ -76,7 +76,7 @@ export const RULES: Rule[] = [
       answers.taxableLeak === "yes" &&
       answers.account === "opened" &&
       quotaPossiblyLeft(answers),
-    title: "枠が残っているのに、別口座で買っています",
+    title: "別の口座でも、買っています",
     detail:
       "特定口座や一般口座など、NISAではない口座で買うと、非課税の席を使いません。残枠があるうちは、NISAの口座側で買うかを見てください。銘柄は勧めません。",
   },
