@@ -1,0 +1,9 @@
+---
+description: 実装後のサーモス必須ゲート（/ai-review は使わない）
+alwaysApply: true
+---
+# サーモス・ゲート
+
+ソースを足したら、完了・PR 準備・マージ可の前に `.cursor/skills/thermos-gate/SKILL.md` を実行する。`/ai-review` は使わない。セキュリティ観点はサーモスの branch audit に含める。
+
+docs・ルール・コメントのみは省略可。モデル天井は `high`。利用者がその会話で指示しない限り `fast` / `xhigh` / `max` は付けない。
