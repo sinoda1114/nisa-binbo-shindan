@@ -1,6 +1,6 @@
 export const PUBLIC_URL = "https://nisa-binbo-shindan.vercel.app";
 
-export type ShareTargetId = "x" | "line" | "facebook" | "threads";
+export type ShareTargetId = "x" | "line" | "threads";
 
 export type ShareDestination = {
   id: ShareTargetId;
@@ -11,11 +11,10 @@ export type ShareDestination = {
 const LABELS: Record<ShareTargetId, string> = {
   x: "X",
   line: "LINE",
-  facebook: "Facebook",
   threads: "Threads",
 };
 
-const ORDER: readonly ShareTargetId[] = ["x", "line", "facebook", "threads"];
+const ORDER: readonly ShareTargetId[] = ["x", "line", "threads"];
 
 function destinationHref(id: ShareTargetId, encodedMessage: string): string {
   switch (id) {
@@ -23,8 +22,6 @@ function destinationHref(id: ShareTargetId, encodedMessage: string): string {
       return `https://x.com/intent/post?text=${encodedMessage}`;
     case "line":
       return `https://line.me/R/msg/text/?${encodedMessage}`;
-    case "facebook":
-      return `https://www.facebook.com/sharer/sharer.php?quote=${encodedMessage}`;
     case "threads":
       return `https://www.threads.net/intent/post?text=${encodedMessage}`;
     default: {
