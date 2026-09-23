@@ -50,8 +50,6 @@ const SHARE_LINKS: { target: ShareTarget; label: string }[] = [
 const app = requireApp();
 
 let screen: Screen = { kind: "start" };
-let shareOpen = false;
-let shareFocus: "stamp" | "button" | "list" = "stamp";
 
 function reduce(current: Screen, event: Event): Screen {
   switch (event.type) {
@@ -100,12 +98,7 @@ function applyChoice(current: Screen, event: ChooseEvent): Screen {
 }
 
 function dispatch(event: Event) {
-  const previous = screen.kind;
   screen = reduce(screen, event);
-  if (screen.kind !== "result" || previous !== "result") {
-    shareOpen = false;
-    shareFocus = "stamp";
-  }
   render();
 }
 
@@ -292,32 +285,38 @@ function renderResult(diagnosis: Diagnosis) {
   }
   const shareButton = el("button", "btn btn-share", "シェア");
   shareButton.type = "button";
-  shareButton.setAttribute("aria-expanded", shareOpen ? "true" : "false");
-  if (shareOpen) {
-    shareButton.setAttribute("aria-controls", "share-destinations");
-  }
+  shareButton.setAttribute("aria-expanded", "false");
   shareButton.addEventListener("click", () => {
-    shareOpen = !shareOpen;
-    shareFocus = shareOpen ? "list" : "button";
-    render();
+    toggleShare(shareButton, diagnosis.headline);
   });
   card.append(shareButton);
-  const list = shareOpen ? renderShareList(diagnosis.headline) : null;
-  if (list) {
-    card.append(list);
-  }
   const restart = el("button", "btn btn-primary", "もう一度はじめる");
   restart.addEventListener("click", () => dispatch({ type: "restart" }));
   card.append(restart);
   renderDisclaimer(card);
-  const listFocus = list?.querySelector("a");
-  const focusOn =
-    shareFocus === "list" && listFocus instanceof HTMLElement
-      ? listFocus
-      : shareFocus === "button"
-        ? shareButton
-        : stamp;
-  mount(card, focusOn);
+  mount(card, stamp);
+}
+
+function toggleShare(shareButton: HTMLButtonElement, headline: string) {
+  const open = shareButton.getAttribute("aria-expanded") === "true";
+  if (open) {
+    const panel = shareButton.nextElementSibling;
+    if (panel instanceof HTMLElement && panel.classList.contains("share-panel")) {
+      panel.remove();
+    }
+    shareButton.setAttribute("aria-expanded", "false");
+    shareButton.removeAttribute("aria-controls");
+    shareButton.focus();
+    return;
+  }
+  const panel = renderShareList(headline);
+  shareButton.insertAdjacentElement("afterend", panel);
+  shareButton.setAttribute("aria-expanded", "true");
+  shareButton.setAttribute("aria-controls", "share-destinations");
+  const first = panel.querySelector("a");
+  if (first instanceof HTMLElement) {
+    first.focus();
+  }
 }
 
 function renderShareList(headline: string): HTMLElement {
