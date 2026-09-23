@@ -415,3 +415,22 @@ body {
     transform: rotate(-7deg);
   }
 }
+
+.btn-block {
+  width: 100%;
+  border: 1px solid var(--line);
+}
+
+.btn-block:hover {
+  background: rgb(28 20 14 / 0.05);
+}
+
+a.btn {
+  text-decoration: none;
+}
+
+.share {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
