@@ -113,8 +113,24 @@ function renderDisclaimer(parent: HTMLElement) {
   parent.append(el("p", "disclaimer", DISCLAIMER));
 }
 
+function mount(sheet: HTMLElement) {
+  const desk = el("div", "desk");
+  desk.append(sheet);
+  app.replaceChildren(desk);
+  const heading = sheet.querySelector("h1");
+  if (heading instanceof HTMLElement) {
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+  }
+}
+
+function runningHead(): HTMLElement {
+  return el("p", "running", "NISA貧乏診断");
+}
+
 function renderStart() {
-  const card = el("section", "panel");
+  const card = el("section", "panel sheet");
+  card.append(el("p", "kicker", "家計簿の一ページ"));
   card.append(el("h1", "title", "NISA貧乏診断"));
   card.append(
     el(
@@ -134,7 +150,7 @@ function renderStart() {
   start.addEventListener("click", () => dispatch({ type: "start" }));
   card.append(start);
   renderDisclaimer(card);
-  app.replaceChildren(card);
+  mount(card);
 }
 
 function choiceButton(label: string, selected: boolean): HTMLButtonElement {
@@ -204,24 +220,37 @@ function renderQuestion(index: number, answers: Partial<Answers>) {
   if (!question) {
     throw new Error("設問がありません");
   }
-  const card = el("section", "panel");
+  const card = el("section", "panel sheet");
+  card.append(runningHead());
   const nav = el("div", "nav");
   const back = el("button", "btn btn-ghost", "戻る");
   back.addEventListener("click", () => dispatch({ type: "back" }));
   nav.append(back);
   nav.append(el("p", "progress", `${index + 1}/${QUESTIONS.length}`));
   card.append(nav);
+  const meter = el("div", "meter");
+  meter.setAttribute("aria-hidden", "true");
+  meter.style.setProperty(
+    "--fill",
+    `${((index + 1) / QUESTIONS.length) * 100}%`,
+  );
+  card.append(meter);
   card.append(el("h1", "question", question.prompt));
   const list = el("div", "choices");
   appendChoices(question, answers, list);
   card.append(list);
-  app.replaceChildren(card);
+  mount(card);
 }
 
 function renderResult(diagnosis: Diagnosis) {
-  const card = el("section", "panel");
+  const card = el("section", "panel sheet");
+  card.append(runningHead());
   card.append(
-    el("p", `verdict verdict-${diagnosis.verdict}`, VERDICT_LABEL[diagnosis.verdict]),
+    el(
+      "p",
+      `stamp verdict verdict-${diagnosis.verdict}`,
+      VERDICT_LABEL[diagnosis.verdict],
+    ),
   );
   card.append(el("h1", "headline", diagnosis.headline));
   card.append(el("p", "summary", diagnosis.summary));
@@ -239,7 +268,7 @@ function renderResult(diagnosis: Diagnosis) {
   restart.addEventListener("click", () => dispatch({ type: "restart" }));
   card.append(restart);
   renderDisclaimer(card);
-  app.replaceChildren(card);
+  mount(card);
 }
 
 function render() {

@@ -1,0 +1,24 @@
+---
+description: 実装後のサーモス必須ゲート（/ai-review は使わない）
+alwaysApply: true
+---
+# サーモス・ゲート
+
+ソースを足したら、完了・PR 準備・マージ可の前に必ずサーモスを走らせる。`/ai-review` は使わない。セキュリティ観点はサーモスの branch audit に含める。
+
+docs・ルール・コメントのみは省略可。
+
+## 手順
+
+1. ベースは `origin/main`（無ければ `origin/HEAD`）。`git fetch` してから diff と変更ファイルを読む。
+2. 同じメッセージで次を並列起動する:
+   - `thermo-nuclear-review-subagent`（バグ・破壊・セキュリティ・devex・フラグ漏れ）
+   - `thermo-nuclear-code-quality-review-subagent`（保守性・構造・肥大化・code judo）
+3. その `subagent_type` が無ければ `generalPurpose` を2本並列し、プロンプト先頭で `thermo-nuclear-review` と `thermo-nuclear-code-quality-review` のスキル本文を読ませる。プラグインのインストールは試みない。
+4. 各 Task に `### Git / diff output`、`### Changed file contents`、ブランチ名と PR 番号（あれば）を渡す。
+5. 親が統合する。重複は潰し、重なりを重く見る。High から直す。実質的な再変更があれば再実行する。
+6. 最終返答または PR 本文に「サーモス実施・主な指摘と対応」を短く残す。
+
+モデルは省略時 `inherit`。利用者がその会話で指示しない限り `fast` / `xhigh` / `max` は付けない。天井は `high`。
+
+詳細手順の正本: `.cursor/skills/thermos-gate/SKILL.md`
