@@ -137,6 +137,26 @@ describe("diagnose", () => {
     expect(result.headline).toBe("今年の枠、ちゃんと座れてます");
   });
 
+  it("does not claim leftover quota when usage is unknown and buying outside NISA", () => {
+    const result = diagnose(
+      fill({
+        account: "opened",
+        quotaUse: "unknown",
+        frameUse: "both",
+        idleCash: "none",
+        taxableLeak: "yes",
+      }),
+    );
+    const finding = result.findings.find(
+      (item) => item.id === "taxable-while-quota-left",
+    );
+    expect(result.findings.map((item) => item.id)).toEqual([
+      "unknown-quota",
+      "taxable-while-quota-left",
+    ]);
+    expect(finding?.title).toBe("別の口座でも、買っています");
+  });
+
   it("treats unknown quota as possibly left, not as mostly used", () => {
     expectDiagnosis(
       fill({
