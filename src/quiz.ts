@@ -152,7 +152,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "sameBroker",
-    prompt: "買っている証券会社は、今年のNISAを開いている会社と同じですか。",
+    prompt: "買っている証券会社は、今年のNISAを開設している会社と同じですか。",
     choices: [
       { value: "same", label: "同じ会社で買っている" },
       { value: "other", label: "別の会社でも買っている" },

@@ -148,7 +148,7 @@ export const RULES: Rule[] = [
     id: "broker-cash-some",
     severity: "risk",
     when: (answers) => answers.brokerCash === "some" && idleWhileQuotaOpen(answers),
-    title: "証券会社に、買い残しが少しあります",
+    title: "証券会社に、まだ買っていないお金が少しあります",
     detail:
       "入金と買付は別です。現金が残っていて枠も残っているなら、買うかを見てください。銘柄は勧めません。",
   },
@@ -161,7 +161,7 @@ export const RULES: Rule[] = [
       quotaPossiblyLeft(answers),
     title: "NISAと別の会社で、買っています",
     detail:
-      "今年のNISAは、一つの証券会社だけです。別の会社での買付は、NISAの非課税枠を使いません。残枠があるなら、NISAを開いている会社で買うかを見てください。銘柄は勧めません。",
+      "今年のNISAは、一つの証券会社だけです。別の会社での買付は、NISAの非課税枠を使いません。残枠があるなら、NISAを開設している会社で買うかを見てください。銘柄は勧めません。",
   },
   {
     id: "dividend-taxed",
