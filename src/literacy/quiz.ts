@@ -156,7 +156,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "tsumitate",
-    prompt: "毎月同じ額で買い続けると、値動きはどうなりますか。",
+    prompt: "毎月同じ額で買い続けると、どうなりますか。",
     choices: [
       {
         value: "not-guaranteed",

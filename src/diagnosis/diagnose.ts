@@ -5,7 +5,7 @@ export const VERDICT_COPY: Record<Verdict, { headline: string; summary: string }
   loss: {
     headline: "非課税の枠、取りこぼしています",
     summary:
-      "使い方のどこかで、今年の非課税枠を活かせていません。金額は出していません。残っているなら、今年中に使うものです。",
+      "使い方のどこかで、今年の非課税枠を活かせていません。金額は出していません。枠が残っているなら、今年中に使うものです。",
   },
   risky: {
     headline: "使い方、あと一歩で惜しいです",
@@ -15,7 +15,7 @@ export const VERDICT_COPY: Record<Verdict, { headline: string; summary: string }
   ok: {
     headline: "今年の枠、ちゃんと使えてます",
     summary:
-      "大きな未使用や、NISA以外の口座へのずれは見当たりませんでした。未使用の年間枠は翌年に繰り越せません。来年も、年内に使ってください。",
+      "大きな未使用や、NISA以外の口座へのずれは見当たりませんでした。未使用の年間枠は翌年に繰り越せません。来年も、その年のうちに使ってください。",
   },
 };
 
