@@ -1,9 +1,31 @@
 import type { Answers, Rule } from "./types";
 
+const annualQuotaUnused = (answers: Answers) => answers.quotaUse === "none";
+
 const quotaPossiblyLeft = (answers: Answers) =>
   answers.quotaUse === "none" ||
   answers.quotaUse === "some" ||
   answers.quotaUse === "unknown";
+
+/**
+ * 枠別の指摘を、年間枠の判定にどう重ねるか。
+ * stack-while-left は残りそうなら出す。ほぼ未使用でも unused-quota と並べる。
+ * defer-when-unused はほとんど未使用なら unused-quota に譲る。
+ */
+type AnnualOverlap = "stack-while-left" | "defer-when-unused";
+
+function annualOverlapAllows(answers: Answers, overlap: AnnualOverlap): boolean {
+  switch (overlap) {
+    case "stack-while-left":
+      return quotaPossiblyLeft(answers);
+    case "defer-when-unused":
+      return !annualQuotaUnused(answers);
+    default: {
+      const unreachable: never = overlap;
+      return unreachable;
+    }
+  }
+}
 
 const recurringOpen = (answers: Answers) =>
   answers.frameUse !== "none" && quotaPossiblyLeft(answers);
@@ -12,7 +34,7 @@ export const RULES: Rule[] = [
   {
     id: "unused-quota",
     severity: "loss",
-    when: (answers) => answers.quotaUse === "none",
+    when: (answers) => annualQuotaUnused(answers),
     title: "今年の枠、ほぼ未使用です",
     detail:
       "つみたて投資枠は年120万円、成長投資枠は年240万円です。ほとんど使っていないと、今年の非課税枠は年越しで消えます。今年中に枠を使うか検討してください。何を買うかは述べません。",
@@ -37,7 +59,8 @@ export const RULES: Rule[] = [
     id: "tsumitate-small",
     severity: "risk",
     when: (answers) =>
-      answers.tsumitateAmount === "symbolic" && quotaPossiblyLeft(answers),
+      answers.tsumitateAmount === "symbolic" &&
+      annualOverlapAllows(answers, "stack-while-left"),
     title: "積立額が、年120万円に届いていません",
     detail:
       "積立額が小さく、つみたて投資枠の年120万円に届いていません。未使用分は翌年に繰り越せません。何を積むかは述べません。",
@@ -47,7 +70,7 @@ export const RULES: Rule[] = [
     severity: "risk",
     when: (answers) =>
       (answers.growthQuota === "none" || answers.growthQuota === "some") &&
-      answers.quotaUse !== "none",
+      annualOverlapAllows(answers, "defer-when-unused"),
     title: "成長投資枠が、まだ残っています",
     detail:
       "成長投資枠が残っています。未使用分は翌年に繰り越せません。銘柄は勧めません。",
@@ -93,7 +116,7 @@ export const RULES: Rule[] = [
       "つみたて投資枠は年120万円です。使わないままだと、その分は年越しで消えます。つみたて投資枠の残りも確認してください。",
   },
   {
-    id: "opened-but-not-buying",
+    id: "not-yet-buying",
     severity: "risk",
     when: (answers) => answers.frameUse === "none",
     title: "口座はあるのに、まだ買っていません",

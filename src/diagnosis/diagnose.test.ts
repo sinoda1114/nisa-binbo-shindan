@@ -165,7 +165,7 @@ describe("diagnose", () => {
     );
   });
 
-  it("still flags an opened account that has not bought yet", () => {
+  it("still flags frames that have not bought yet", () => {
     expectDiagnosis(
       fill({
         quotaUse: "unknown",
@@ -174,7 +174,7 @@ describe("diagnose", () => {
         taxableLeak: "unknown",
       }),
       "risky",
-      ["unknown-quota", "opened-but-not-buying"],
+      ["unknown-quota", "not-yet-buying"],
     );
   });
 
