@@ -538,3 +538,174 @@ a.btn {
   flex-direction: column;
   gap: var(--space-2);
 }
+
+.desk.has-consult {
+  padding-bottom: calc(var(--tap) + var(--space-6) + env(safe-area-inset-bottom, 0px));
+}
+
+.consult-fab {
+  position: fixed;
+  z-index: 3;
+  right: max(var(--space-4), env(safe-area-inset-right, 0px));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom, 0px));
+  min-height: var(--tap);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--vermillion);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--vermillion);
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  box-shadow: var(--shadow-sheet);
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+
+.consult-fab:hover {
+  background: rgb(142 36 24 / 0.08);
+}
+
+.consult-fab:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.consult-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  background: rgb(28 22 18 / 0.55);
+}
+
+.consult-sheet {
+  --margin-line: 0.7rem;
+  position: fixed;
+  z-index: 5;
+  left: 50%;
+  bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
+  width: min(28rem, calc(100% - var(--space-4)));
+  max-height: min(36rem, calc(100dvh - var(--space-6)));
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-5)
+    calc(var(--margin-line) + var(--space-4));
+  transform: translateX(-50%);
+  background-color: var(--paper);
+  background-image: linear-gradient(
+    90deg,
+    transparent var(--margin-line),
+    rgb(142 36 24 / 0.55) var(--margin-line),
+    rgb(142 36 24 / 0.55) calc(var(--margin-line) + 2px),
+    transparent calc(var(--margin-line) + 2px)
+  );
+  color: var(--ink);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sheet);
+  animation: consult-in 180ms ease-out both;
+}
+
+.consult-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.consult-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.consult-close {
+  flex: none;
+}
+
+.consult-note,
+.consult-status,
+.consult-line {
+  margin: 0;
+}
+
+.consult-note,
+.consult-status {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.consult-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.consult-line {
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.consult-line:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.consult-user {
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--vermillion);
+}
+
+.consult-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.consult-input {
+  width: 100%;
+  min-height: 5.5rem;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.consult-input:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (min-width: 480px) {
+  .consult-sheet {
+    --margin-line: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consult-sheet,
+  .consult-fab {
+    animation: none;
+    transition: none;
+  }
+}
+
+@keyframes consult-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
