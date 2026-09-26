@@ -1,12 +1,9 @@
 import {
-  CONSULT_LIMIT,
-  VERDICT_LABEL,
-  type ConsultMessage,
-  type ConsultResult,
-} from "../src/consult";
-import { VERDICT_COPY } from "../src/diagnosis/diagnose";
-import { RULES } from "../src/diagnosis/rules";
-import type { Verdict } from "../src/diagnosis/types";
+  consultLimit,
+  findings as knownFindingTexts,
+  verdicts,
+  type ScreenVerdict,
+} from "../server/screen-copy.js";
 
 /**
  * generateContent クイックスタートが使う安定版のモデル ID。
@@ -36,11 +33,30 @@ const LIMIT = {
   findings: 12,
 } as const;
 
+type Verdict = ScreenVerdict;
+
+type ConsultFinding = {
+  title: string;
+  detail: string;
+};
+
+type ConsultResult = {
+  verdictLabel: string;
+  headline: string;
+  summary: string;
+  findings: ConsultFinding[];
+};
+
+type ConsultMessage = {
+  role: "user" | "model";
+  text: string;
+};
+
 const VERDICT_BY_LABEL = new Map(
-  (Object.keys(VERDICT_LABEL) as Verdict[]).map((verdict) => [VERDICT_LABEL[verdict], verdict] as const),
+  (Object.keys(verdicts) as Verdict[]).map((verdict) => [verdicts[verdict].label, verdict] as const),
 );
 
-const KNOWN_FINDINGS = new Set(RULES.map((rule) => `${rule.title}\n${rule.detail}`));
+const KNOWN_FINDINGS = new Set(knownFindingTexts);
 
 const CALL_WINDOW_MS = 60_000;
 const MAX_CALLS_PER_WINDOW = 8;
@@ -133,7 +149,7 @@ function readResult(value: unknown): ConsultResult | undefined {
   if (!verdictLabel || !verdict || !headline || !summary) {
     return undefined;
   }
-  const copy = VERDICT_COPY[verdict];
+  const copy = verdicts[verdict];
   if (headline !== copy.headline || summary !== copy.summary) {
     return undefined;
   }
@@ -159,7 +175,7 @@ function readResult(value: unknown): ConsultResult | undefined {
 }
 
 function readMessages(value: unknown): ConsultMessage[] | undefined {
-  if (!Array.isArray(value) || value.length > CONSULT_LIMIT.messages) {
+  if (!Array.isArray(value) || value.length > consultLimit.messages) {
     return undefined;
   }
   const messages: ConsultMessage[] = [];
@@ -170,7 +186,7 @@ function readMessages(value: unknown): ConsultMessage[] | undefined {
     if (message.role !== "user" && message.role !== "model") {
       return undefined;
     }
-    const text = readBounded(message.text, message.role === "user" ? CONSULT_LIMIT.user : CONSULT_LIMIT.model);
+    const text = readBounded(message.text, message.role === "user" ? consultLimit.user : consultLimit.model);
     if (!text) {
       return undefined;
     }
@@ -283,7 +299,7 @@ function readModelText(payload: unknown): string | undefined {
   if (joined.length === 0) {
     return undefined;
   }
-  return joined.slice(0, CONSULT_LIMIT.model);
+  return joined.slice(0, consultLimit.model);
 }
 
 export async function handleConsult(request: Request, deps?: ConsultDeps): Promise<Response> {

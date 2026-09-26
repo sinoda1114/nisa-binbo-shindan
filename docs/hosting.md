@@ -4,7 +4,7 @@
 
 公開の正本は GitHub です。`sinoda1114/nisa-binbo-shindan` の `main` への push が、Vercel プロジェクト `nisa-binbo-shindan`（scope `sinoda1114s-projects`）の Production になります。本番ブランチは `main` です。
 
-Framework は Vite、Build Command は `npm test && npm run build`、Output は `dist`（`vercel.json` と同じ）です。Clerk / Turso / Mantine は使いません。結果画面の相談だけ、`api/consult.ts` が Vercel のサーバー関数として動きます。この関数が環境変数 `GEMINI_API_KEY` を読みます。キーが無いときは相談を始めません。回答と会話はサーバーに保存しません。
+Framework は Vite、Build Command は `npm test && npm run build`、Output は `dist`（`vercel.json` と同じ）です。Clerk / Turso / Mantine は使いません。結果画面の相談だけ、`api/consult.ts` が Vercel のサーバー関数として動きます。この関数が環境変数 `GEMINI_API_KEY` を読みます。画面の診断文は `server/screen-copy.js` に置き、関数から `src` は読みません。診断文を変えたあとは `npm run emit:consult-copy` でそのファイルを書き直します。キーが無いときは相談を始めません。回答と会話はサーバーに保存しません。
 
 ## ローカル
 

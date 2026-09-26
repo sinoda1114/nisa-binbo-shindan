@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "emit:consult-copy": "vite-node scripts/emit-consult-copy.ts"
   },
   "devDependencies": {
     "typescript": "^5.9.2",

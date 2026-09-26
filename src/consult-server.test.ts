@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { GEMINI_MODEL, allowGeminiCall, geminiRequestBody, handleConsult } from "../api/consult";
-import { VERDICT_LABEL } from "./consult";
+import { consultLimit, findings, verdicts } from "../server/screen-copy.js";
+import { CONSULT_LIMIT, VERDICT_LABEL } from "./consult";
 import { VERDICT_COPY } from "./diagnosis/diagnose";
 import { RULES } from "./diagnosis/rules";
 
@@ -25,6 +26,23 @@ function post(body: unknown): Request {
     body: JSON.stringify(body),
   });
 }
+
+describe("server screen copy", () => {
+  it("matches the on-screen verdicts, findings, and limits", () => {
+    expect(consultLimit).toEqual(CONSULT_LIMIT);
+    const verdictsOnScreen = Object.keys(VERDICT_COPY) as Array<keyof typeof VERDICT_COPY>;
+    expect(Object.keys(verdicts).sort()).toEqual([...verdictsOnScreen].sort());
+    for (const verdict of verdictsOnScreen) {
+      expect(verdicts[verdict]).toEqual({
+        label: VERDICT_LABEL[verdict],
+        headline: VERDICT_COPY[verdict].headline,
+        summary: VERDICT_COPY[verdict].summary,
+      });
+    }
+    const onScreen = RULES.map((rule) => `${rule.title}\n${rule.detail}`);
+    expect([...findings].sort()).toEqual([...onScreen].sort());
+  });
+});
 
 describe("allowGeminiCall", () => {
   it("stops the ninth call inside the same minute", () => {
@@ -156,6 +174,39 @@ describe("handleConsult", () => {
     const body = geminiRequestBody({ result, messages: [] });
     expect(body.contents[0]?.parts[0]?.text).toContain("相談の最初の一文を書いてください");
     expect(body.contents[0]?.parts[0]?.text).toContain(result.summary);
+  });
+
+  it("accepts every verdict and finding the result screen can show", async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({
+        candidates: [{ content: { parts: [{ text: "結果を言い換えます。投資助言ではありません。" }] } }],
+      }),
+    );
+    for (const verdict of Object.keys(VERDICT_COPY) as Array<keyof typeof VERDICT_COPY>) {
+      const response = await handleConsult(
+        post({
+          result: {
+            verdictLabel: VERDICT_LABEL[verdict],
+            headline: VERDICT_COPY[verdict].headline,
+            summary: VERDICT_COPY[verdict].summary,
+            findings: [],
+          },
+          messages: [],
+        }),
+        { apiKey: KEY, fetchImpl },
+      );
+      expect(response.status).toBe(200);
+    }
+    for (const rule of RULES) {
+      const response = await handleConsult(
+        post({
+          result: { ...result, findings: [{ title: rule.title, detail: rule.detail }] },
+          messages: [],
+        }),
+        { apiKey: KEY, fetchImpl },
+      );
+      expect(response.status).toBe(200);
+    }
   });
 
   it("accepts an ok result with no findings", async () => {
