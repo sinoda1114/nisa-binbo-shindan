@@ -1,6 +1,7 @@
-export type AccountStatus = "opened" | "planning" | "none";
 export type QuotaUse = "none" | "some" | "most" | "unknown";
 export type FrameUse = "tsumitate" | "growth" | "both" | "unsure" | "none";
+export type TsumitateAmount = "symbolic" | "moderate" | "filling" | "none" | "unknown";
+export type GrowthQuota = "none" | "some" | "most" | "unknown";
 export type IdleCash = "lots" | "some" | "none" | "unknown";
 export type TaxableLeak = "yes" | "no" | "unknown";
 export type Recurring = "running" | "paused" | "never" | "unknown";
@@ -10,9 +11,10 @@ export type SameBroker = "same" | "other" | "not-buying" | "unknown";
 export type DividendRoute = "proportional" | "other" | "none" | "unknown";
 
 export type Answers = {
-  account: AccountStatus;
   quotaUse: QuotaUse;
   frameUse: FrameUse;
+  tsumitateAmount: TsumitateAmount;
+  growthQuota: GrowthQuota;
   recurring: Recurring;
   soldThisYear: SoldThisYear;
   idleCash: IdleCash;
@@ -23,17 +25,17 @@ export type Answers = {
 };
 
 export type FindingId =
-  | "no-account"
-  | "planning-only"
   | "unused-quota"
   | "partial-quota"
   | "unknown-quota"
+  | "tsumitate-small"
+  | "growth-quota-left"
   | "idle-cash-lots"
   | "idle-cash-some"
   | "taxable-while-quota-left"
   | "frame-unsure"
   | "growth-without-tsumitate"
-  | "opened-but-not-buying"
+  | "not-yet-buying"
   | "recurring-paused"
   | "recurring-never"
   | "recurring-unknown"
