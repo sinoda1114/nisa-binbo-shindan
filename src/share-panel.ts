@@ -1,10 +1,16 @@
 import {
+  DIRECT_SHARE_HINT,
   captureResultPng,
   deliverResultPng,
+  directShareNotice,
   downloadBlob,
   imageShareNotice,
   pastePlaceLabel,
+  prepareResultShare,
   readPngClipboard,
+  resultImageFile,
+  sharePreparedResult,
+  type ResultShareTarget,
 } from "./result-image";
 
 export type ShareDestination = {
@@ -12,6 +18,8 @@ export type ShareDestination = {
   label: string;
   href: string;
 };
+
+const FALLBACK_HINT = "このブラウザでは、画像を付けたまま投稿先を開けません。";
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -58,11 +66,26 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+function browserShareTarget(): ResultShareTarget {
+  const target: ResultShareTarget = {};
+  if (typeof navigator.canShare === "function") {
+    const canShare = navigator.canShare.bind(navigator);
+    target.canShare = (data) => canShare(data);
+  }
+  if (typeof navigator.share === "function") {
+    const share = navigator.share.bind(navigator);
+    target.share = (data) => share(data);
+  }
+  return target;
+}
+
 export function mountSharePanel(
   slot: HTMLElement,
   options: {
     paper: HTMLElement;
     filename: string;
+    message: string;
+    title: string;
     destinations: readonly ShareDestination[];
     linkText: string;
   },
@@ -72,8 +95,18 @@ export function mountSharePanel(
   let busy = false;
   let capture: Promise<Blob> | null = null;
   let captured: Blob | null = null;
+  let directShare = false;
 
   slot.classList.add("share");
+
+  function payloadFor(blob: Blob): ShareData | null {
+    return prepareResultShare(
+      resultImageFile(blob, options.filename),
+      options.message,
+      options.title,
+      browserShareTarget(),
+    );
+  }
 
   function beginCapture(): Promise<Blob> {
     if (captured) {
@@ -83,6 +116,10 @@ export function mountSharePanel(
       capture = captureResultPng(options.paper)
         .then((blob) => {
           captured = blob;
+          directShare = payloadFor(blob) !== null;
+          if (directShare) {
+            paint();
+          }
           setBusy(busy);
           return blob;
         })
@@ -95,8 +132,9 @@ export function mountSharePanel(
   }
 
   function focusPressed(button: HTMLElement) {
-    if (button.isConnected) {
-      button.focus({ preventScroll: true });
+    const next = button.isConnected ? button : slot.querySelector(".btn-share");
+    if (next instanceof HTMLElement && next.isConnected) {
+      next.focus({ preventScroll: true });
     }
   }
 
@@ -106,7 +144,7 @@ export function mountSharePanel(
       if (!(node instanceof HTMLButtonElement)) {
         return;
       }
-      const waitsForImage = node.classList.contains("share-link");
+      const waitsForImage = node.classList.contains("share-link") || node.classList.contains("btn-share");
       node.disabled = value || (waitsForImage && captured === null);
     });
   }
@@ -119,7 +157,18 @@ export function mountSharePanel(
     }
   }
 
-  function publishImage(place: string, href: string | null, pressed: HTMLButtonElement) {
+  function revealFallback(text: string) {
+    directShare = false;
+    open = true;
+    notice = text;
+    paint();
+    const next = slot.querySelector(".share-list button");
+    if (next instanceof HTMLElement) {
+      next.focus({ preventScroll: true });
+    }
+  }
+
+  function publishImage(place: string, href: string, pressed: HTMLButtonElement) {
     if (busy) {
       return;
     }
@@ -134,13 +183,9 @@ export function mountSharePanel(
       filename: options.filename,
       clipboard: readPngClipboard(),
       download: downloadBlob,
-      ...(href
-        ? {
-            opened: () => {
-              window.open(href, "_blank", "noopener,noreferrer");
-            },
-          }
-        : {}),
+      opened: () => {
+        window.open(href, "_blank", "noopener,noreferrer");
+      },
     });
     void pending
       .then((outcome) => {
@@ -156,30 +201,62 @@ export function mountSharePanel(
       });
   }
 
+  function shareImage(pressed: HTMLButtonElement, data: ShareData) {
+    if (busy) {
+      return;
+    }
+    const pending = sharePreparedResult(data, browserShareTarget());
+    directShare = true;
+    setBusy(true);
+    let openedFallback = false;
+    void pending
+      .then((outcome) => {
+        if (outcome === "unavailable") {
+          openedFallback = true;
+          revealFallback(directShareNotice(outcome));
+          return;
+        }
+        if (outcome === "aborted") {
+          return;
+        }
+        showNotice(directShareNotice(outcome));
+        if (!slot.querySelector(".share-hint")) {
+          paint();
+        }
+      })
+      .finally(() => {
+        setBusy(false);
+        if (!openedFallback) {
+          focusPressed(pressed);
+        }
+      });
+  }
+
   function paint() {
     slot.replaceChildren();
-    const copyImage = el("button", "btn btn-image", "結果の画像をコピー");
-    copyImage.type = "button";
-    copyImage.setAttribute("data-share-action", "image");
-    copyImage.setAttribute("aria-describedby", "share-status-text");
-    copyImage.addEventListener("click", () => {
-      publishImage("", null, copyImage);
-    });
-
     const status = el("p", "share-status");
     status.id = "share-status-text";
     status.setAttribute("role", "status");
     status.textContent = notice;
 
-    const toggle = el("button", "btn btn-share", "結果をシェア");
-    toggle.type = "button";
-    toggle.setAttribute("data-share-action", "toggle");
-    toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) {
-      toggle.setAttribute("aria-controls", "share-destinations");
+    const share = el("button", "btn btn-share", "結果をシェア");
+    share.type = "button";
+    share.disabled = captured === null;
+    share.setAttribute("data-share-action", "share");
+    share.setAttribute("aria-describedby", "share-status-text");
+    if (!directShare && open) {
+      share.setAttribute("aria-expanded", "true");
+      share.setAttribute("aria-controls", "share-destinations");
+    } else if (!directShare) {
+      share.setAttribute("aria-expanded", "false");
     }
-    toggle.addEventListener("click", () => {
-      if (busy) {
+    share.addEventListener("click", () => {
+      if (busy || captured === null) {
+        return;
+      }
+      const data = payloadFor(captured);
+      if (data) {
+        shareImage(share, data);
         return;
       }
       open = !open;
@@ -192,17 +269,37 @@ export function mountSharePanel(
       }
     });
 
-    slot.append(copyImage, status, toggle);
-    if (open) {
+    const link = el("button", "share-quiet", "リンクをコピー");
+    link.type = "button";
+    link.setAttribute("data-share-action", "link");
+    link.addEventListener("click", () => {
+      if (busy) {
+        return;
+      }
+      setBusy(true);
+      void copyText(options.linkText)
+        .then((copied) => {
+          showNotice(copied ? "リンクをコピーしました" : "リンクをコピーできませんでした");
+        })
+        .finally(() => {
+          setBusy(false);
+          focusPressed(link);
+        });
+    });
+
+    slot.append(share, status);
+    if (directShare) {
+      const hint = el("p", "share-hint", DIRECT_SHARE_HINT);
+      hint.id = "share-hint-text";
+      share.setAttribute("aria-describedby", "share-status-text share-hint-text");
+      slot.append(hint);
+    }
+    slot.append(link);
+
+    if (open && !directShare) {
       const panel = el("div", "share-panel");
       panel.id = "share-destinations";
-      panel.append(
-        el(
-          "p",
-          "share-hint",
-          "投稿画面に画像は自動で付きません。コピーした画像を貼り付けるか、保存した画像を添付してください。",
-        ),
-      );
+      panel.append(el("p", "share-hint", FALLBACK_HINT));
       const list = el("ul", "share-list");
       for (const destination of options.destinations) {
         const row = el("li");
@@ -216,26 +313,6 @@ export function mountSharePanel(
         row.append(button);
         list.append(row);
       }
-      const linkRow = el("li");
-      const link = el("button", "share-copy share-quiet", "リンクをコピー");
-      link.type = "button";
-      link.setAttribute("data-share-action", "link");
-      link.addEventListener("click", () => {
-        if (busy) {
-          return;
-        }
-        setBusy(true);
-        void copyText(options.linkText)
-          .then((copied) => {
-            showNotice(copied ? "リンクをコピーしました" : "リンクをコピーできませんでした");
-          })
-          .finally(() => {
-            setBusy(false);
-            focusPressed(link);
-          });
-      });
-      linkRow.append(link);
-      list.append(linkRow);
       panel.append(list);
       slot.append(panel);
     }

@@ -5,7 +5,7 @@ import { QUESTIONS, isComplete, type Question } from "./quiz";
 import { resultHead } from "./result-art";
 import { NISA_IMAGE_NAME, noteClipboardPermission } from "./result-image";
 import { mountSharePanel } from "./share-panel";
-import { shareTargets } from "./share";
+import { shareMessage, shareTargets } from "./share";
 import { linkToCopy } from "./share-destinations";
 import "./style.css";
 
@@ -340,6 +340,8 @@ function renderResult(diagnosis: Diagnosis) {
   mountSharePanel(share, {
     paper: card,
     filename: NISA_IMAGE_NAME,
+    message: shareMessage(diagnosis.verdict),
+    title: "NISA貧乏診断",
     destinations: shareTargets(diagnosis.verdict),
     linkText: linkToCopy(),
   });
