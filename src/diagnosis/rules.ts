@@ -129,7 +129,7 @@ export const RULES: Rule[] = [
     id: "sold-and-stopped",
     severity: "loss",
     when: (answers) => answers.soldThisYear === "stopped",
-    title: "売る分の枠は、今年は戻りません",
+    title: "売っても、今年の枠は戻りません",
     detail:
       "今年の年間枠は、売っても戻ってきません。残枠があるなら、今年中に使うか検討してください。何を買い直すかは述べません。",
   },

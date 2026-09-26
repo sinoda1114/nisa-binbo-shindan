@@ -115,9 +115,9 @@ export const QUESTIONS: Question[] = [
     field: "soldThisYear",
     prompt: "今年、NISAで売るつもりはありますか。",
     choices: [
-      { value: "stopped", label: "売る。今年はもう買わない" },
-      { value: "still-using", label: "売る。残りの枠は使う" },
-      { value: "not-sold", label: "売らない" },
+      { value: "stopped", label: "売るつもりで、今年はもう買わない" },
+      { value: "still-using", label: "売るつもりで、残りの枠は使う" },
+      { value: "not-sold", label: "売るつもりはない" },
       { value: "unknown", label: "わからない" },
     ],
   },
