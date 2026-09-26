@@ -2,7 +2,7 @@ import { literacyMood, resultHead } from "../result-art";
 import { LITERACY_IMAGE_NAME } from "../result-image";
 import { mountSharePanel } from "../share-panel";
 import { PROVISIONAL_TITLE, QUESTIONS, TITLE_NOTE, type Question } from "./quiz";
-import { linkToCopy, shareMessage, shareTargets } from "./share";
+import { linkToCopy, shareTargets } from "./share";
 import {
   initialScreen,
   reduce,
@@ -249,8 +249,6 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     mountSharePanel(share, {
       paper: card,
       filename: LITERACY_IMAGE_NAME,
-      message: shareMessage(diagnosis.verdict),
-      title: PROVISIONAL_TITLE,
       destinations: shareTargets(diagnosis.verdict),
       linkText: linkToCopy(),
     });
