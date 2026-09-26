@@ -1,16 +1,10 @@
 import {
-  DIRECT_SHARE_HINT,
   captureResultPng,
   deliverResultPng,
-  directShareNotice,
   downloadBlob,
   imageShareNotice,
   pastePlaceLabel,
-  prepareResultShare,
   readPngClipboard,
-  resultImageFile,
-  sharePreparedResult,
-  type ResultShareTarget,
 } from "./result-image";
 
 export type ShareDestination = {
@@ -18,15 +12,6 @@ export type ShareDestination = {
   label: string;
   href: string;
 };
-
-const CREATING = "結果画像を作成しています。";
-const FALLBACK_HINT = "このブラウザでは、画像を付けたまま投稿先を開けません。";
-
-type ShareMode =
-  | { kind: "pending" }
-  | { kind: "failed" }
-  | { kind: "sheet"; blob: Blob; data: ShareData }
-  | { kind: "links"; blob: Blob; open: boolean };
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -73,41 +58,45 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-function browserShareTarget(): ResultShareTarget {
-  const target: ResultShareTarget = {};
-  if (typeof navigator.canShare === "function") {
-    const canShare = navigator.canShare.bind(navigator);
-    target.canShare = (data) => canShare(data);
-  }
-  if (typeof navigator.share === "function") {
-    const share = navigator.share.bind(navigator);
-    target.share = (data) => share(data);
-  }
-  return target;
-}
-
 export function mountSharePanel(
   slot: HTMLElement,
   options: {
     paper: HTMLElement;
     filename: string;
-    message: string;
-    title: string;
     destinations: readonly ShareDestination[];
     linkText: string;
   },
 ): void {
+  let open = false;
   let notice = "";
   let busy = false;
   let capture: Promise<Blob> | null = null;
-  let mode: ShareMode = { kind: "pending" };
+  let captured: Blob | null = null;
 
   slot.classList.add("share");
 
-  function focusIn(selector: string) {
-    const next = slot.querySelector(selector);
-    if (next instanceof HTMLElement) {
-      next.focus({ preventScroll: true });
+  function beginCapture(): Promise<Blob> {
+    if (captured) {
+      return Promise.resolve(captured);
+    }
+    if (!capture) {
+      capture = captureResultPng(options.paper)
+        .then((blob) => {
+          captured = blob;
+          setBusy(busy);
+          return blob;
+        })
+        .catch((error: unknown) => {
+          capture = null;
+          throw error;
+        });
+    }
+    return capture;
+  }
+
+  function focusPressed(button: HTMLElement) {
+    if (button.isConnected) {
+      button.focus({ preventScroll: true });
     }
   }
 
@@ -117,8 +106,8 @@ export function mountSharePanel(
       if (!(node instanceof HTMLButtonElement)) {
         return;
       }
-      const waitsForImage = node.classList.contains("btn-share") && mode.kind === "pending";
-      node.disabled = value || waitsForImage;
+      const waitsForImage = node.classList.contains("share-link");
+      node.disabled = value || (waitsForImage && captured === null);
     });
   }
 
@@ -130,57 +119,30 @@ export function mountSharePanel(
     }
   }
 
-  function beginCapture(): Promise<Blob> {
-    if (mode.kind === "sheet" || mode.kind === "links") {
-      return Promise.resolve(mode.blob);
-    }
-    if (capture) {
-      return capture;
-    }
-    mode = { kind: "pending" };
-    notice = CREATING;
-    capture = captureResultPng(options.paper)
-      .then((blob) => {
-        const data = prepareResultShare(
-          resultImageFile(blob, options.filename),
-          options.message,
-          options.title,
-          browserShareTarget(),
-        );
-        mode = data ? { kind: "sheet", blob, data } : { kind: "links", blob, open: false };
-        if (notice === CREATING) {
-          notice = "";
-        }
-        paint();
-        setBusy(busy);
-        return blob;
-      })
-      .catch((error: unknown) => {
-        capture = null;
-        mode = { kind: "failed" };
-        notice = imageShareNotice("failed", "");
-        paint();
-        setBusy(busy);
-        throw error;
-      });
-    paint();
-    return capture;
-  }
-
-  function publishImage(blob: Blob, place: string, href: string, pressed: HTMLButtonElement) {
+  function publishImage(place: string, href: string | null, pressed: HTMLButtonElement) {
     if (busy) {
       return;
     }
+    const ready = captured;
     setBusy(true);
-    void deliverResultPng({
-      png: blob,
+    if (!ready) {
+      slot.setAttribute("data-pending-share", "");
+      showNotice("結果画像を作成しています。");
+    }
+    const pending = deliverResultPng({
+      png: ready ?? beginCapture(),
       filename: options.filename,
       clipboard: readPngClipboard(),
       download: downloadBlob,
-      opened: () => {
-        window.open(href, "_blank", "noopener,noreferrer");
-      },
-    })
+      ...(href
+        ? {
+            opened: () => {
+              window.open(href, "_blank", "noopener,noreferrer");
+            },
+          }
+        : {}),
+    });
+    void pending
       .then((outcome) => {
         showNotice(imageShareNotice(outcome, place));
       })
@@ -188,138 +150,99 @@ export function mountSharePanel(
         showNotice(imageShareNotice("failed", place));
       })
       .finally(() => {
+        slot.removeAttribute("data-pending-share");
         setBusy(false);
-        if (pressed.isConnected) {
-          pressed.focus({ preventScroll: true });
-        }
-      });
-  }
-
-  function shareSheet(pressed: HTMLButtonElement, blob: Blob, data: ShareData) {
-    if (busy) {
-      return;
-    }
-    const pending = sharePreparedResult(data, browserShareTarget());
-    setBusy(true);
-    void pending
-      .then((outcome) => {
-        if (outcome === "unavailable") {
-          mode = { kind: "links", blob, open: true };
-          notice = directShareNotice(outcome);
-          paint();
-          return;
-        }
-        if (outcome !== "aborted") {
-          showNotice(directShareNotice(outcome));
-        }
-      })
-      .finally(() => {
-        setBusy(false);
-        if (mode.kind === "links" && mode.open) {
-          focusIn(".share-list button");
-          return;
-        }
-        if (pressed.isConnected) {
-          pressed.focus({ preventScroll: true });
-          return;
-        }
-        focusIn(".btn-share");
+        focusPressed(pressed);
       });
   }
 
   function paint() {
     slot.replaceChildren();
+    const copyImage = el("button", "btn btn-image", "結果の画像をコピー");
+    copyImage.type = "button";
+    copyImage.setAttribute("data-share-action", "image");
+    copyImage.setAttribute("aria-describedby", "share-status-text");
+    copyImage.addEventListener("click", () => {
+      publishImage("", null, copyImage);
+    });
+
     const status = el("p", "share-status");
     status.id = "share-status-text";
     status.setAttribute("role", "status");
     status.textContent = notice;
 
-    const share = el("button", "btn btn-share", "結果をシェア");
-    share.type = "button";
-    share.disabled = mode.kind === "pending";
-    share.setAttribute("data-share-action", "share");
-    share.setAttribute("aria-describedby", "share-status-text");
-    if (mode.kind === "links") {
-      share.setAttribute("aria-expanded", mode.open ? "true" : "false");
-      if (mode.open) {
-        share.setAttribute("aria-controls", "share-destinations");
-      }
+    const toggle = el("button", "btn btn-share", "結果をシェア");
+    toggle.type = "button";
+    toggle.setAttribute("data-share-action", "toggle");
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+      toggle.setAttribute("aria-controls", "share-destinations");
     }
-    share.addEventListener("click", () => {
-      if (busy || mode.kind === "pending") {
-        return;
-      }
-      if (mode.kind === "failed") {
-        void beginCapture().catch(() => {});
-        focusIn(".btn-share");
-        return;
-      }
-      if (mode.kind === "sheet") {
-        shareSheet(share, mode.blob, mode.data);
-        return;
-      }
-      mode = { kind: "links", blob: mode.blob, open: !mode.open };
-      paint();
-      focusIn(mode.open ? ".share-list button" : ".btn-share");
-    });
-
-    const link = el("button", "share-quiet", "リンクをコピー");
-    link.type = "button";
-    link.setAttribute("data-share-action", "link");
-    link.addEventListener("click", () => {
+    toggle.addEventListener("click", () => {
       if (busy) {
         return;
       }
-      setBusy(true);
-      void copyText(options.linkText)
-        .then((copied) => {
-          showNotice(copied ? "リンクをコピーしました" : "リンクをコピーできませんでした");
-        })
-        .finally(() => {
-          setBusy(false);
-          if (link.isConnected) {
-            link.focus({ preventScroll: true });
-          }
-        });
+      open = !open;
+      paint();
+      const next = open
+        ? slot.querySelector(".share-list button")
+        : slot.querySelector(".btn-share");
+      if (next instanceof HTMLElement) {
+        next.focus({ preventScroll: true });
+      }
     });
 
-    slot.append(share, status);
-    if (mode.kind === "sheet") {
-      const hint = el("p", "share-hint", DIRECT_SHARE_HINT);
-      hint.id = "share-hint-text";
-      share.setAttribute("aria-describedby", "share-status-text share-hint-text");
-      slot.append(hint);
-    }
-    slot.append(link);
-
-    const showDestinations = mode.kind === "failed" || (mode.kind === "links" && mode.open);
-    if (!showDestinations) {
-      return;
-    }
-    const panel = el("div", "share-panel");
-    panel.id = "share-destinations";
-    if (mode.kind === "links") {
-      panel.append(el("p", "share-hint", FALLBACK_HINT));
-    }
-    const list = el("ul", "share-list");
-    for (const destination of options.destinations) {
-      const row = el("li");
-      const button = el("button", "share-link", pastePlaceLabel(destination.label));
-      button.type = "button";
-      button.setAttribute("data-share-action", destination.id);
-      button.addEventListener("click", () => {
-        if (mode.kind === "links") {
-          publishImage(mode.blob, destination.label, destination.href, button);
+    slot.append(copyImage, status, toggle);
+    if (open) {
+      const panel = el("div", "share-panel");
+      panel.id = "share-destinations";
+      panel.append(
+        el(
+          "p",
+          "share-hint",
+          "投稿画面に画像は自動で付きません。コピーした画像を貼り付けるか、保存した画像を添付してください。",
+        ),
+      );
+      const list = el("ul", "share-list");
+      for (const destination of options.destinations) {
+        const row = el("li");
+        const button = el("button", "share-link", pastePlaceLabel(destination.label));
+        button.type = "button";
+        button.disabled = captured === null;
+        button.setAttribute("data-share-action", destination.id);
+        button.addEventListener("click", () => {
+          publishImage(destination.label, destination.href, button);
+        });
+        row.append(button);
+        list.append(row);
+      }
+      const linkRow = el("li");
+      const link = el("button", "share-copy share-quiet", "リンクをコピー");
+      link.type = "button";
+      link.setAttribute("data-share-action", "link");
+      link.addEventListener("click", () => {
+        if (busy) {
           return;
         }
-        window.open(destination.href, "_blank", "noopener,noreferrer");
+        setBusy(true);
+        void copyText(options.linkText)
+          .then((copied) => {
+            showNotice(copied ? "リンクをコピーしました" : "リンクをコピーできませんでした");
+          })
+          .finally(() => {
+            setBusy(false);
+            focusPressed(link);
+          });
       });
-      row.append(button);
-      list.append(row);
+      linkRow.append(link);
+      list.append(linkRow);
+      panel.append(list);
+      slot.append(panel);
     }
-    panel.append(list);
-    slot.append(panel);
   }
 
-  void beginCapture().catch(() => {});
+  paint();
+  void beginCapture().catch(() => {
+    showNotice(imageShareNotice("failed", ""));
+  });
 }
