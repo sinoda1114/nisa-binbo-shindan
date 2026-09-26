@@ -15,8 +15,8 @@ export const CONSULT_COPY = {
   sending: "送っています",
   failed: "相談を続けられませんでした。閉じて、もう一度開いてください。",
   send: "送る",
-  placeholder: "結果の使い方で確認したいこと",
-  note: "この相談は、出た結果の言い換えと、使い方の確認です。投資助言ではありません。銘柄の推奨や税額の計算はしません。",
+  placeholder: "次に何を確認すればよいか",
+  note: "この結果について、次に確認することを相談できます。投資助言ではありません。銘柄の推奨や税額の計算はしません。",
 } as const;
 
 export type ConsultFinding = {
