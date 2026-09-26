@@ -205,7 +205,7 @@ function renderStart() {
   start.type = "button";
   start.addEventListener("click", () => dispatch({ type: "start" }));
   card.append(start);
-  const backHome = el("button", "btn btn-block", "診断の選択に戻る");
+  const backHome = el("button", "btn btn-block", "戻る");
   backHome.type = "button";
   backHome.addEventListener("click", () => openHome());
   card.append(backHome);
@@ -242,8 +242,8 @@ function appendChoices(
   list: HTMLElement,
 ) {
   switch (question.field) {
-    case "account":
-      addChoices(list, question.field, question.choices, answers.account);
+    case "quotaPlan":
+      addChoices(list, question.field, question.choices, answers.quotaPlan);
       return;
     case "quotaUse":
       addChoices(list, question.field, question.choices, answers.quotaUse);

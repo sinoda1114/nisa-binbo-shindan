@@ -4,6 +4,7 @@ import { RULES } from "./rules";
 import type { Answers, FindingId, Verdict } from "./types";
 
 const NEUTRAL = {
+  quotaPlan: "use",
   recurring: "running",
   soldThisYear: "not-sold",
   brokerCash: "none",
@@ -11,7 +12,12 @@ const NEUTRAL = {
   dividendRoute: "none",
 } as const satisfies Pick<
   Answers,
-  "recurring" | "soldThisYear" | "brokerCash" | "sameBroker" | "dividendRoute"
+  | "quotaPlan"
+  | "recurring"
+  | "soldThisYear"
+  | "brokerCash"
+  | "sameBroker"
+  | "dividendRoute"
 >;
 
 function fill(
@@ -39,7 +45,6 @@ describe("diagnose", () => {
   it("marks opened, full-ish usage as ok with no findings", () => {
     const result = diagnose(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -51,22 +56,25 @@ describe("diagnose", () => {
     expect(result.headline).toBe("今年のNISA枠をおおむね活用できています");
   });
 
-  it("marks no account plus lots of idle cash as loss", () => {
+  it("marks deferring this year's quota, plus lots of idle cash, as loss", () => {
     const answers = fill({
-      account: "none",
-      quotaUse: "unknown",
-      frameUse: "unsure",
+      quotaUse: "some",
+      frameUse: "both",
       idleCash: "lots",
-      taxableLeak: "unknown",
+      taxableLeak: "no",
+      quotaPlan: "defer",
     });
-    expectDiagnosis(answers, "loss", ["no-account", "idle-cash-lots"]);
+    expectDiagnosis(answers, "loss", [
+      "partial-quota",
+      "quota-deferred",
+      "idle-cash-lots",
+    ]);
     expect(diagnose(answers).headline).toBe("今年の非課税枠を取りこぼしています");
   });
 
   it("stacks unused quota, idle cash, taxable leak, and unsure frames as loss", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "none",
         frameUse: "unsure",
         idleCash: "lots",
@@ -84,7 +92,6 @@ describe("diagnose", () => {
 
   it("marks partial quota and some idle cash as risky without unused-quota", () => {
     const answers = fill({
-      account: "opened",
       quotaUse: "some",
       frameUse: "tsumitate",
       idleCash: "some",
@@ -98,7 +105,6 @@ describe("diagnose", () => {
   it("marks growth-centered use as the only finding when quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "growth",
         idleCash: "none",
@@ -109,24 +115,23 @@ describe("diagnose", () => {
     );
   });
 
-  it("marks planning-only as the only finding", () => {
+  it("marks an undecided plan as risky while quota remains", () => {
     expectDiagnosis(
       fill({
-        account: "planning",
-        quotaUse: "unknown",
-        frameUse: "none",
+        quotaUse: "some",
+        frameUse: "both",
         idleCash: "none",
-        taxableLeak: "unknown",
+        taxableLeak: "no",
+        quotaPlan: "undecided",
       }),
       "risky",
-      ["planning-only"],
+      ["partial-quota", "quota-undecided"],
     );
   });
 
-  it("does not fire idle-cash-lots when the account is opened and quota is mostly used", () => {
+  it("does not fire idle-cash-lots when this year's quota is mostly used", () => {
     const result = diagnose(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "tsumitate",
         idleCash: "lots",
@@ -141,7 +146,6 @@ describe("diagnose", () => {
   it("does not claim leftover quota when usage is unknown and buying outside NISA", () => {
     const result = diagnose(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "both",
         idleCash: "none",
@@ -161,7 +165,6 @@ describe("diagnose", () => {
   it("treats unknown quota as possibly left, not as mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "both",
         idleCash: "lots",
@@ -175,7 +178,6 @@ describe("diagnose", () => {
   it("marks unknown quota alone as risky, not ok", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "tsumitate",
         idleCash: "none",
@@ -189,7 +191,6 @@ describe("diagnose", () => {
   it("adds a paused tsumitate setting beside a partial quota", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -204,7 +205,6 @@ describe("diagnose", () => {
   it("adds a missing tsumitate setting when the quota is unused", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "none",
         frameUse: "tsumitate",
         idleCash: "none",
@@ -219,7 +219,6 @@ describe("diagnose", () => {
   it("adds an unknown tsumitate setting beside an unknown quota", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "both",
         idleCash: "none",
@@ -234,7 +233,6 @@ describe("diagnose", () => {
   it("adds a small uninvested broker balance beside a partial quota", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -249,7 +247,6 @@ describe("diagnose", () => {
   it("does not nag about tsumitate settings when the quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -263,7 +260,6 @@ describe("diagnose", () => {
 
   it("marks selling and stopping as its own loss", () => {
     const answers = fill({
-      account: "opened",
       quotaUse: "most",
       frameUse: "both",
       idleCash: "none",
@@ -277,7 +273,6 @@ describe("diagnose", () => {
   it("does not treat an unknown sale as a finding", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -292,7 +287,6 @@ describe("diagnose", () => {
   it("marks a large uninvested broker balance as loss while quota remains", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -307,7 +301,6 @@ describe("diagnose", () => {
   it("does not flag broker cash when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -322,7 +315,6 @@ describe("diagnose", () => {
   it("marks buying at another broker as loss while quota remains", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -337,7 +329,6 @@ describe("diagnose", () => {
   it("does not flag another broker when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -349,25 +340,23 @@ describe("diagnose", () => {
     );
   });
 
-  it("does not add other-broker when there is no NISA account", () => {
+  it("does not flag a plan to defer when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "none",
-        quotaUse: "unknown",
-        frameUse: "none",
+        quotaUse: "most",
+        frameUse: "both",
         idleCash: "none",
-        taxableLeak: "unknown",
-        sameBroker: "other",
+        taxableLeak: "no",
+        quotaPlan: "defer",
       }),
-      "loss",
-      ["no-account"],
+      "ok",
+      [],
     );
   });
 
   it("marks a non-proportional dividend route as loss", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -390,7 +379,6 @@ describe("diagnose", () => {
   it("does not flag an unknown dividend route", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "growth",
         idleCash: "none",

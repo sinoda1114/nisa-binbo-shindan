@@ -175,7 +175,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     start.type = "button";
     start.addEventListener("click", () => dispatch({ type: "start" }));
     card.append(start);
-    const back = el("button", "btn btn-block", "診断の選択に戻る");
+    const back = el("button", "btn btn-block", "戻る");
     back.type = "button";
     back.addEventListener("click", () => leave());
     card.append(back);
@@ -240,7 +240,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
     restart.type = "button";
     restart.addEventListener("click", () => dispatch({ type: "restart" }));
     card.append(restart);
-    const back = el("button", "btn btn-block", "診断の選択に戻る");
+    const back = el("button", "btn btn-block", "戻る");
     back.type = "button";
     back.addEventListener("click", () => leave());
     card.append(back);
