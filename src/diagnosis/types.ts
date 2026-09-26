@@ -33,7 +33,7 @@ export type FindingId =
   | "taxable-while-quota-left"
   | "frame-unsure"
   | "growth-without-tsumitate"
-  | "opened-but-not-buying"
+  | "not-buying"
   | "recurring-paused"
   | "recurring-never"
   | "recurring-unknown"

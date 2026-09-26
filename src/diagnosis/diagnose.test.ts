@@ -102,6 +102,19 @@ describe("diagnose", () => {
     expect(idsOf(answers)).not.toContain("unused-quota");
   });
 
+  it("marks not buying as risky even when the annual quota looks mostly used", () => {
+    expectDiagnosis(
+      fill({
+        quotaUse: "most",
+        frameUse: "none",
+        idleCash: "none",
+        taxableLeak: "no",
+      }),
+      "risky",
+      ["not-buying"],
+    );
+  });
+
   it("marks growth-centered use as the only finding when quota is mostly used", () => {
     expectDiagnosis(
       fill({
