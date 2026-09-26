@@ -5,7 +5,7 @@ import {
   shareDestinations,
 } from "./share-destinations";
 
-const MESSAGE = "私のNISA貧乏診断です。使い方は、あと一歩で惜しい判定です。";
+const MESSAGE = "NISA貧乏診断の結果は「NISAの使い方に確認したい点があります」でした。";
 
 describe("shareDestinations", () => {
   it("opens X, LINE, and Threads with the message and no page URL", () => {

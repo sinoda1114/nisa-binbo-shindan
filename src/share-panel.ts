@@ -127,7 +127,7 @@ export function mountSharePanel(
     setBusy(true);
     if (!ready) {
       slot.setAttribute("data-pending-share", "");
-      showNotice("画像を写しています。");
+      showNotice("結果画像を作成しています。");
     }
     const pending = deliverResultPng({
       png: ready ?? beginCapture(),
@@ -200,7 +200,7 @@ export function mountSharePanel(
         el(
           "p",
           "share-hint",
-          "シェアに画像は付きません。開いたあと、コピーした画像を貼り付けてください。",
+          "投稿画面に画像は自動で付きません。コピーした画像を貼り付けるか、保存した画像を添付してください。",
         ),
       );
       const list = el("ul", "share-list");

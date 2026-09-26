@@ -5,9 +5,9 @@ import {
 } from "./share-destinations";
 
 const BLURB: Record<Verdict, string> = {
-  loss: "私のNISA貧乏診断です。非課税の枠を、取りこぼしている判定です。",
-  risky: "私のNISA貧乏診断です。使い方は、あと一歩で惜しい判定です。",
-  ok: "私のNISA貧乏診断です。今年の枠は、使えている判定です。",
+  loss: "NISA貧乏診断の結果は「今年の非課税枠を取りこぼしています」でした。",
+  risky: "NISA貧乏診断の結果は「NISAの使い方に確認したい点があります」でした。",
+  ok: "NISA貧乏診断の結果は「今年のNISA枠をおおむね活用できています」でした。",
 };
 
 export function shareMessage(verdict: Verdict): string {

@@ -70,7 +70,7 @@ export type Question =
 export const QUESTIONS: Question[] = [
   {
     field: "purchasingPower",
-    prompt: "物価が上がったとき、預金の数字が同じなら、買える量はどうなりますか。",
+    prompt: "預金残高が変わらないとき、物価が上がると同じ金額で買えるものの量はどうなりますか。",
     choices: [
       { value: "real-can-fall", label: "減ることがある" },
       { value: "nominal-only", label: "数字が同じなら、買える量も同じ" },
@@ -79,7 +79,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "compound",
-    prompt: "複利とは、どの説明に近いですか。",
+    prompt: "複利について正しい説明はどれですか。",
     choices: [
       { value: "on-interest", label: "すでについた利息にも、次の利息がつく" },
       { value: "principal-only", label: "利息はいつも、最初の元本だけにつく" },
@@ -106,7 +106,7 @@ export const QUESTIONS: Question[] = [
   {
     field: "accountFiling",
     prompt:
-      "上場株式等の手続きで、特定口座（源泉徴収あり）と一般口座はどう違いますか。",
+      "上場株式等を売却した利益について、特定口座（源泉徴収あり）と一般口座では、確定申告の手続きがどう違いますか。",
     choices: [
       {
         value: "withholding-optional",
@@ -122,7 +122,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "returnOfCapital",
-    prompt: "投資信託の元本払戻金（特別分配金）は、何ですか。",
+    prompt: "投資信託の元本払戻金（特別分配金）は、どのような分配金ですか。",
     choices: [
       {
         value: "reduces-basis",
@@ -162,7 +162,7 @@ export const QUESTIONS: Question[] = [
         value: "not-guaranteed",
         label: "買う時期が分かれるだけ。必ず増えることも、元本が守られることもない",
       },
-      { value: "always-up", label: "同じ額なら、下がっても必ず取り戻せる" },
+      { value: "always-up", label: "毎月同じ額で買えば、価格が下がっても損失は必ず取り戻せる" },
       { value: "unknown", label: "わからない" },
     ],
   },

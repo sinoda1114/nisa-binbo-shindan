@@ -3,17 +3,17 @@ import type { Answers, Diagnosis, Finding, Verdict } from "./types";
 
 export const VERDICT_COPY: Record<Verdict, { headline: string; summary: string }> = {
   loss: {
-    headline: "非課税の枠、取りこぼしています",
+    headline: "今年の非課税枠を取りこぼしています",
     summary:
       "使い方のどこかで、今年の非課税枠を活かせていません。金額は出していません。枠が残っているなら、今年中に使うものです。",
   },
   risky: {
-    headline: "使い方、あと一歩で惜しいです",
+    headline: "NISAの使い方に確認したい点があります",
     summary:
-      "大きな損というより、使い方の端が気になります。断定はしません。下記を見て、今年中に手を打つか決めてください。",
+      "以下の項目を確認し、今年中に対応するか検討してください。",
   },
   ok: {
-    headline: "今年の枠、ちゃんと使えてます",
+    headline: "今年のNISA枠をおおむね活用できています",
     summary:
       "大きな未使用や、NISA以外の口座へのずれは見当たりませんでした。未使用の年間枠は翌年に繰り越せません。来年も、その年のうちに使ってください。",
   },

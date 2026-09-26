@@ -56,7 +56,7 @@ describe("imageShareNotice", () => {
       "画像をコピーしました。投稿欄に貼り付けてください。",
     );
     expect(imageShareNotice("copied", "X")).toBe(
-      "画像をコピーしました。Xを開いたあと、貼り付けてください。",
+      "画像をコピーしました。開いたXの投稿画面に貼り付けてください。",
     );
     expect(imageShareNotice("saved", "LINE")).toBe(
       "画像を保存しました。LINEでは、保存した画像を添付してください。",
@@ -78,10 +78,10 @@ describe("shouldAttemptClipboardWrite", () => {
 
 describe("pastePlaceLabel", () => {
   it("names the post screen after the image copy", () => {
-    expect(pastePlaceLabel("X")).toBe("Xに貼る");
-    expect(pastePlaceLabel("LINE")).toBe("LINEに貼る");
-    expect(pastePlaceLabel("Facebook")).toBe("Facebookに貼る");
-    expect(pastePlaceLabel("Threads")).toBe("Threadsに貼る");
+    expect(pastePlaceLabel("X")).toBe("Xでシェアする");
+    expect(pastePlaceLabel("LINE")).toBe("LINEでシェアする");
+    expect(pastePlaceLabel("Facebook")).toBe("Facebookでシェアする");
+    expect(pastePlaceLabel("Threads")).toBe("Threadsでシェアする");
   });
 });
 
