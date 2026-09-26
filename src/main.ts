@@ -1,5 +1,7 @@
+import { VERDICT_LABEL, consultResult } from "./consult";
+import { mountConsult } from "./consult-panel";
 import { diagnose } from "./diagnosis/diagnose";
-import type { Answers, Diagnosis, Verdict } from "./diagnosis/types";
+import type { Answers, Diagnosis } from "./diagnosis/types";
 import { mountLiteracy } from "./literacy/view";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
 import { resultHead } from "./result-art";
@@ -30,12 +32,6 @@ type Event =
 
 const DISCLAIMER =
   "この診断は教育目的の目安です。投資助言でも税務助言でもありません。銘柄の推奨や税額の計算はしません。回答は保存しません。";
-
-const VERDICT_LABEL: Record<Verdict, string> = {
-  loss: "損している",
-  risky: "危うい",
-  ok: "概ね良い",
-};
 
 function requireApp(): HTMLElement {
   const node = document.querySelector("#app");
@@ -169,13 +165,14 @@ function renderDisclaimer(parent: HTMLElement) {
   parent.append(el("p", "disclaimer", DISCLAIMER));
 }
 
-function mount(sheet: HTMLElement, focusOn: HTMLElement) {
+function mount(sheet: HTMLElement, focusOn: HTMLElement): HTMLElement {
   const desk = el("div", "desk");
   desk.append(sheet);
   app.replaceChildren(desk);
   window.scrollTo(0, 0);
   focusOn.tabIndex = -1;
   focusOn.focus({ preventScroll: true });
+  return desk;
 }
 
 function runningHead(): HTMLElement {
@@ -336,13 +333,14 @@ function renderResult(diagnosis: Diagnosis) {
   restart.addEventListener("click", () => dispatch({ type: "restart" }));
   card.append(restart);
   renderDisclaimer(card);
-  mount(card, stamp);
+  const desk = mount(card, stamp);
   mountSharePanel(share, {
     paper: card,
     filename: NISA_IMAGE_NAME,
     destinations: shareTargets(diagnosis.verdict),
     linkText: linkToCopy(),
   });
+  mountConsult(desk, card, consultResult(diagnosis));
 }
 
 function render() {
