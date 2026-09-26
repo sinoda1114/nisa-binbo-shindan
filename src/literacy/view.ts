@@ -168,7 +168,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
       el(
         "p",
         "lead",
-        "制度の数字、口座の種類、税金の扱い、よくある誤解を質問で確認します。NISAの使い方の取りこぼしを見る診断とは別です。",
+        "金融制度の数字や口座の種類、税金の扱いについて、質問で理解を確認します。NISAの利用状況を確認する診断とは別の内容です。",
       ),
     );
     const start = el("button", "btn btn-primary", "診断をはじめる");

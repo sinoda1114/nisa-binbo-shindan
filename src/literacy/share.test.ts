@@ -14,18 +14,18 @@ const VERDICTS: Verdict[] = ["gap", "shaky", "solid"];
 describe("literacy share", () => {
   it("says this is my literacy diagnosis, and keeps the URL for the link copy only", () => {
     expect(shareMessage("gap")).toBe(
-      "私の金融リテラシー診断です。誤解がありそう、という結果です。",
+      "金融リテラシー診断の結果は「誤解がありそうです」でした。",
     );
     expect(shareMessage("shaky")).toBe(
-      "私の金融リテラシー診断です。確認した方がよさそう、という結果です。",
+      "金融リテラシー診断の結果は「確認した方がよさそうです」でした。",
     );
     expect(shareMessage("solid")).toBe(
-      "私の金融リテラシー診断です。概ね合っている、という結果です。",
+      "金融リテラシー診断の結果は「概ね合っています」でした。",
     );
     expect(linkToCopy()).toBe(PUBLIC_PAGE_URL);
     for (const verdict of VERDICTS) {
       const message = shareMessage(verdict);
-      expect(message.startsWith("私の金融リテラシー診断です")).toBe(true);
+      expect(message.startsWith("金融リテラシー診断の結果は")).toBe(true);
       expect(message).not.toContain("NISA貧乏");
       expect(message).not.toContain(PUBLIC_PAGE_URL);
       expect(message).not.toContain("http");

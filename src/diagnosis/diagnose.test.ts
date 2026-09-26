@@ -48,7 +48,7 @@ describe("diagnose", () => {
     );
     expect(result.verdict).toBe("ok");
     expect(result.findings.map((finding) => finding.id)).toEqual([]);
-    expect(result.headline).toBe("今年の枠、ちゃんと使えてます");
+    expect(result.headline).toBe("今年のNISA枠をおおむね活用できています");
   });
 
   it("marks no account plus lots of idle cash as loss", () => {
@@ -60,7 +60,7 @@ describe("diagnose", () => {
       taxableLeak: "unknown",
     });
     expectDiagnosis(answers, "loss", ["no-account", "idle-cash-lots"]);
-    expect(diagnose(answers).headline).toBe("非課税の枠、取りこぼしています");
+    expect(diagnose(answers).headline).toBe("今年の非課税枠を取りこぼしています");
   });
 
   it("stacks unused quota, idle cash, taxable leak, and unsure frames as loss", () => {
@@ -91,7 +91,7 @@ describe("diagnose", () => {
       taxableLeak: "no",
     });
     expectDiagnosis(answers, "risky", ["partial-quota", "idle-cash-some"]);
-    expect(diagnose(answers).headline).toBe("使い方、あと一歩で惜しいです");
+    expect(diagnose(answers).headline).toBe("NISAの使い方に確認したい点があります");
     expect(idsOf(answers)).not.toContain("unused-quota");
   });
 
@@ -135,7 +135,7 @@ describe("diagnose", () => {
     );
     expect(result.verdict).toBe("ok");
     expect(result.findings.map((finding) => finding.id)).toEqual([]);
-    expect(result.headline).toBe("今年の枠、ちゃんと使えてます");
+    expect(result.headline).toBe("今年のNISA枠をおおむね活用できています");
   });
 
   it("does not claim leftover quota when usage is unknown and buying outside NISA", () => {
@@ -155,7 +155,7 @@ describe("diagnose", () => {
       "unknown-quota",
       "taxable-while-quota-left",
     ]);
-    expect(finding?.title).toBe("別の口座でも、買っています");
+    expect(finding?.title).toBe("NISA以外の口座でも買付しています");
   });
 
   it("treats unknown quota as possibly left, not as mostly used", () => {
@@ -271,7 +271,7 @@ describe("diagnose", () => {
       soldThisYear: "stopped",
     });
     expectDiagnosis(answers, "loss", ["sold-and-stopped"]);
-    expect(diagnose(answers).headline).toBe("非課税の枠、取りこぼしています");
+    expect(diagnose(answers).headline).toBe("今年の非課税枠を取りこぼしています");
   });
 
   it("does not treat an unknown sale as a finding", () => {

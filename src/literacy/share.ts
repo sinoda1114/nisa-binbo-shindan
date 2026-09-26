@@ -7,9 +7,9 @@ import type { Verdict } from "./types";
 export { linkToCopy, PUBLIC_URL as PUBLIC_PAGE_URL } from "../share-destinations";
 
 const BLURB: Record<Verdict, string> = {
-  gap: "私の金融リテラシー診断です。誤解がありそう、という結果です。",
-  shaky: "私の金融リテラシー診断です。確認した方がよさそう、という結果です。",
-  solid: "私の金融リテラシー診断です。概ね合っている、という結果です。",
+  gap: "金融リテラシー診断の結果は「誤解がありそうです」でした。",
+  shaky: "金融リテラシー診断の結果は「確認した方がよさそうです」でした。",
+  solid: "金融リテラシー診断の結果は「概ね合っています」でした。",
 };
 
 export function shareMessage(verdict: Verdict): string {

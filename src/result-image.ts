@@ -24,7 +24,7 @@ export function imageShareNotice(outcome: ImageOutcome, place: string): string {
       return "画像を用意できませんでした。";
     case "copied":
       if (place.length > 0) {
-        return `画像をコピーしました。${place}を開いたあと、貼り付けてください。`;
+        return `画像をコピーしました。開いた${place}の投稿画面に貼り付けてください。`;
       }
       return "画像をコピーしました。投稿欄に貼り付けてください。";
     case "saved":
@@ -40,7 +40,7 @@ export function imageShareNotice(outcome: ImageOutcome, place: string): string {
 }
 
 export function pastePlaceLabel(name: string): string {
-  return `${name}に貼る`;
+  return `${name}でシェアする`;
 }
 
 let clipboardWriteState = "unknown";
