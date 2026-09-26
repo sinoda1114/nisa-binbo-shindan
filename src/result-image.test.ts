@@ -114,28 +114,21 @@ describe("startPngClipboardWrite", () => {
 });
 
 describe("deliverResultPng", () => {
-  it("opens the post screen after the image is on the clipboard", async () => {
+  it("opens the post screen in the same click as the clipboard write", async () => {
     const order: string[] = [];
-    let release: () => void = () => {};
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const pending = deliverResultPng({
+    const outcome = await deliverResultPng({
       png: pngBlob(),
       filename: "nisa-binbo-kekka.png",
       clipboard: recordingClipboard(async () => {
         order.push("copy");
-        await gate;
       }),
       download: () => true,
       opened: () => {
         order.push("open");
       },
     });
-    expect(order).toEqual(["copy"]);
-    release();
-    await expect(pending).resolves.toBe("copied");
     expect(order).toEqual(["copy", "open"]);
+    expect(outcome).toBe("copied");
   });
 
   it("keeps the png on the clipboard and does not download it", async () => {

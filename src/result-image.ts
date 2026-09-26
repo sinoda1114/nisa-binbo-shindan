@@ -150,12 +150,10 @@ export function deliverResultPng(options: {
   } catch {
     return save(true);
   }
+  options.opened?.();
   return pending.then(
-    () => {
-      options.opened?.();
-      return "copied";
-    },
-    () => save(true),
+    () => "copied",
+    () => save(false),
   );
 }
 
