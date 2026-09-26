@@ -57,14 +57,15 @@ export const RULES: Rule[] = [
     when: (answers) => answers.idleCash === "lots" && quotaPossiblyLeft(answers),
     title: "預金口座に、お金が残っています",
     detail:
-      "かなりの現金が預金のままです。枠が残っているなら、そのお金を今年のNISA枠で使うか検討してください。何をいくら買うかは述べません。",
+      "預金には、生活に必要なお金と、投資に回せるお金があります。枠が残っているなら、投資に回せる分だけを今年のNISA枠で使うか検討してください。生活費や近い支出まで枠に入れる必要はありません。何をいくら買うかは述べません。",
   },
   {
     id: "idle-cash-some",
     severity: "risk",
     when: (answers) => answers.idleCash === "some" && quotaPossiblyLeft(answers),
     title: "預金口座に、お金が少し残っています",
-    detail: "枠が残っているなら、そのお金を今年のNISA枠で使うか検討してください。",
+    detail:
+      "枠が残っているなら、生活に必要なお金を残したうえで、投資に回せる分を今年のNISA枠で使うか検討してください。",
   },
   {
     id: "taxable-while-quota-left",
