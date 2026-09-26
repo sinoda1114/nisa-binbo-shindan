@@ -42,6 +42,30 @@ const VERDICT_BY_LABEL = new Map(
 
 const KNOWN_FINDINGS = new Set(RULES.map((rule) => `${rule.title}\n${rule.detail}`));
 
+const CALL_WINDOW_MS = 60_000;
+const MAX_CALLS_PER_WINDOW = 8;
+const callTimes = new Map<string, number[]>();
+
+export function allowGeminiCall(ip: string, now: number): boolean {
+  const recent = (callTimes.get(ip) ?? []).filter((time) => now - time < CALL_WINDOW_MS);
+  if (recent.length >= MAX_CALLS_PER_WINDOW) {
+    callTimes.set(ip, recent);
+    return false;
+  }
+  recent.push(now);
+  callTimes.set(ip, recent);
+  return true;
+}
+
+function callerIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  const first = forwarded?.split(",")[0]?.trim();
+  if (first && first.length > 0 && first.length <= 80) {
+    return first;
+  }
+  return "unknown";
+}
+
 type ConsultInput = {
   result: ConsultResult;
   messages: ConsultMessage[];
@@ -273,6 +297,9 @@ export async function handleConsult(request: Request, deps?: ConsultDeps): Promi
   const input = readInput(await request.text());
   if (!input) {
     return json(400, { ok: false, reason: "unavailable" });
+  }
+  if (!deps && !allowGeminiCall(callerIp(request), Date.now())) {
+    return json(429, { ok: false, reason: "unavailable" });
   }
   const fetchImpl = deps?.fetchImpl ?? fetch;
   let upstream: Response;

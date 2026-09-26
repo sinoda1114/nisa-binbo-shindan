@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { GEMINI_MODEL, geminiRequestBody, handleConsult } from "../api/consult";
+import { GEMINI_MODEL, allowGeminiCall, geminiRequestBody, handleConsult } from "../api/consult";
 import { VERDICT_LABEL } from "./consult";
 import { VERDICT_COPY } from "./diagnosis/diagnose";
 import { RULES } from "./diagnosis/rules";
@@ -25,6 +25,18 @@ function post(body: unknown): Request {
     body: JSON.stringify(body),
   });
 }
+
+describe("allowGeminiCall", () => {
+  it("stops the ninth call inside the same minute", () => {
+    const ip = "203.0.113.10";
+    const start = 1_700_000_000_000;
+    for (let i = 0; i < 8; i += 1) {
+      expect(allowGeminiCall(ip, start + i)).toBe(true);
+    }
+    expect(allowGeminiCall(ip, start + 9)).toBe(false);
+    expect(allowGeminiCall(ip, start + 60_000)).toBe(true);
+  });
+});
 
 describe("handleConsult", () => {
   it("does not call Gemini when the key is missing", async () => {
@@ -144,6 +156,39 @@ describe("handleConsult", () => {
     const body = geminiRequestBody({ result, messages: [] });
     expect(body.contents[0]?.parts[0]?.text).toContain("相談の最初の一文を書いてください");
     expect(body.contents[0]?.parts[0]?.text).toContain(result.summary);
+  });
+
+  it("accepts an ok result with no findings", async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({
+        candidates: [{ content: { parts: [{ text: "今年の枠はおおむね使えています。" }] } }],
+      }),
+    );
+    const response = await handleConsult(
+      post({
+        result: {
+          verdictLabel: VERDICT_LABEL.ok,
+          headline: VERDICT_COPY.ok.headline,
+          summary: VERDICT_COPY.ok.summary,
+          findings: [],
+        },
+        messages: [],
+      }),
+      { apiKey: KEY, fetchImpl },
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("hides a thrown error that contains the key", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw new Error(`network ${KEY}`);
+    };
+    const response = await handleConsult(post({ result, messages: [] }), {
+      apiKey: KEY,
+      fetchImpl,
+    });
+    expect(response.status).toBe(502);
+    expect(JSON.stringify(await response.json())).not.toContain(KEY);
   });
 
   it("hides upstream errors and does not echo the key", async () => {
