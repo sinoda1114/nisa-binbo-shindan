@@ -119,6 +119,21 @@ describe("diagnose", () => {
     );
   });
 
+  it("does not flag growth-centered use when tsumitate filling reaches the annual frame", () => {
+    expectDiagnosis(
+      fill({
+        quotaUse: "most",
+        frameUse: "growth",
+        idleCash: "none",
+        taxableLeak: "no",
+        tsumitateAmount: "filling",
+        growthQuota: "most",
+      }),
+      "ok",
+      [],
+    );
+  });
+
   it("does not mark a symbolic tsumitate amount when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({

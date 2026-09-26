@@ -110,7 +110,8 @@ export const RULES: Rule[] = [
   {
     id: "growth-without-tsumitate",
     severity: "risk",
-    when: (answers) => answers.frameUse === "growth",
+    when: (answers) =>
+      answers.frameUse === "growth" && answers.tsumitateAmount !== "filling",
     title: "成長投資枠を中心に使っています",
     detail:
       "つみたて投資枠は年120万円です。使わないままだと、その分は年越しで消えます。つみたて投資枠の残りも確認してください。",
