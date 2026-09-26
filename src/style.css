@@ -228,39 +228,27 @@ body {
 
 .btn-share {
   width: 100%;
+  border-color: var(--line);
+}
+
+.btn-share:hover {
+  background: rgb(28 20 14 / 0.05);
+}
+
+.btn-image {
+  width: 100%;
   border: 2px solid var(--vermillion);
   background: var(--paper);
   color: var(--vermillion);
   letter-spacing: 0.06em;
 }
 
-.btn-share:hover {
+.btn-image:hover {
   background: rgb(142 36 24 / 0.08);
 }
 
-.btn-share:disabled:hover {
+.btn-image:disabled:hover {
   background: var(--paper);
-}
-
-.share-quiet {
-  width: 100%;
-  min-height: var(--tap);
-  margin-top: var(--space-2);
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.share-quiet:hover {
-  color: var(--ink);
-}
-
-.share-quiet:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
 }
 
 .share-panel {
@@ -284,7 +272,13 @@ body {
   border-top: 1px solid var(--line);
 }
 
-.share-link {
+.share-copy.share-quiet {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.share-link,
+.share-copy {
   width: 100%;
   min-height: var(--tap);
   display: flex;
@@ -303,16 +297,19 @@ body {
   cursor: pointer;
 }
 
-.share-link:hover {
+.share-link:hover,
+.share-copy:hover {
   background: rgb(28 20 14 / 0.04);
 }
 
-.share-link:focus-visible {
+.share-link:focus-visible,
+.share-copy:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 
-.share-link:disabled {
+.share-link:disabled,
+.share-copy:disabled {
   cursor: default;
   opacity: 0.45;
 }

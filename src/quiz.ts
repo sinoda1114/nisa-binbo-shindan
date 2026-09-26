@@ -113,17 +113,17 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "soldThisYear",
-    prompt: "今年、NISAで売ったあとはどうしていますか。",
+    prompt: "今年、NISAで売るつもりはありますか。",
     choices: [
-      { value: "stopped", label: "売って、その分は今年もう買わない" },
-      { value: "still-using", label: "売っても、残りの枠は使う" },
-      { value: "not-sold", label: "今年は売っていない" },
+      { value: "stopped", label: "売る。今年はもう買わない" },
+      { value: "still-using", label: "売る。残りの枠は使う" },
+      { value: "not-sold", label: "売らない" },
       { value: "unknown", label: "わからない" },
     ],
   },
   {
     field: "idleCash",
-    prompt: "投資に使う予定で、預金口座に残しているお金はありますか。",
+    prompt: "預金口座に残しているお金はありますか。",
     choices: [
       { value: "lots", label: "かなりある" },
       { value: "some", label: "少しある" },
@@ -153,9 +153,9 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "sameBroker",
-    prompt: "今年のNISA口座がある証券会社以外でも、投資商品を買っていますか。",
+    prompt: "NISA口座とは別の証券会社でも、買っていますか。",
     choices: [
-      { value: "same", label: "NISA口座がある会社だけで買っている" },
+      { value: "same", label: "別の会社では買っていない" },
       { value: "other", label: "別の会社でも買っている" },
       { value: "not-buying", label: "まだ買っていない" },
       { value: "unknown", label: "わからない" },
@@ -163,11 +163,11 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "dividendRoute",
-    prompt: "NISAで持っている上場株式の配当金は、どの方式で受け取っていますか。",
+    prompt: "NISAで持っている株の配当金は、どこで受け取っていますか。",
     choices: [
-      { value: "proportional", label: "株式数比例配分方式" },
-      { value: "other", label: "それ以外の方式" },
-      { value: "none", label: "NISA口座に配当のある上場株式は保有していない" },
+      { value: "proportional", label: "証券会社の口座（株式数比例配分方式）" },
+      { value: "other", label: "銀行やゆうちょの口座" },
+      { value: "none", label: "配当金が出る株は持っていない" },
       { value: "unknown", label: "わからない" },
     ],
   },

@@ -1,19 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   deliverResultPng,
-  directShareNotice,
   downloadBlob,
   imageShareNotice,
   pastePlaceLabel,
-  prepareResultShare,
-  resultImageFile,
-  sharePreparedResult,
   shouldAttemptClipboardWrite,
   startPngClipboardWrite,
   type ClipboardWriteItem,
   type ImageOutcome,
   type PngClipboard,
-  type ResultShareTarget,
 } from "./result-image";
 
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -69,77 +64,6 @@ describe("imageShareNotice", () => {
     expect(imageShareNotice("copied", "X")).not.toContain("シェアには");
     expect(imageShareNotice("saved", "LINE")).not.toContain("シェアには");
     expect(imageShareNotice("failed", "Threads")).toBe("画像を用意できませんでした。");
-  });
-});
-
-describe("prepareResultShare", () => {
-  function imageFile(): File {
-    return resultImageFile(pngBlob(), "nisa-binbo-kekka.png");
-  }
-
-  it("sends the image with the caption, and drops fields the browser rejects", () => {
-    const image = imageFile();
-    const seen: ShareData[] = [];
-    const target: ResultShareTarget = {
-      canShare: (data) => {
-        seen.push(data);
-        return data.files?.length === 1 && data.text === "結果です" && data.title === undefined;
-      },
-    };
-    const data = prepareResultShare(image, "結果です", "NISA貧乏診断", target);
-    expect(data?.files).toEqual([image]);
-    expect(data?.text).toBe("結果です");
-    expect(data?.title).toBeUndefined();
-    expect(seen[0]?.title).toBe("NISA貧乏診断");
-    expect(seen[0]?.files?.[0]).toBe(image);
-    expect(image.type).toBe("image/png");
-    expect(image.name).toBe("nisa-binbo-kekka.png");
-  });
-
-  it("returns null when the browser cannot share a file", () => {
-    const image = imageFile();
-    const refusing: ResultShareTarget = { canShare: () => false };
-    expect(prepareResultShare(image, "結果です", "NISA貧乏診断", refusing)).toBeNull();
-    expect(prepareResultShare(image, "結果です", "NISA貧乏診断", {})).toBeNull();
-  });
-
-  it("keeps the image when the caption makes the share invalid", () => {
-    const image = imageFile();
-    const target: ResultShareTarget = {
-      canShare: (data) => data.text === undefined && data.files?.length === 1,
-    };
-    const data = prepareResultShare(image, "結果です", "", target);
-    expect(data?.files).toEqual([image]);
-    expect(data?.text).toBeUndefined();
-  });
-});
-
-describe("sharePreparedResult", () => {
-  const data: ShareData = { files: [], text: "結果です" };
-
-  it("reports a completed share, a cancel, and a browser that cannot share", async () => {
-    const shared: ResultShareTarget = { share: () => Promise.resolve() };
-    const aborted: ResultShareTarget = {
-      share: () => Promise.reject(new DOMException("cancelled", "AbortError")),
-    };
-    const blocked: ResultShareTarget = {
-      share: () => Promise.reject(new Error("NotAllowedError")),
-    };
-    await expect(sharePreparedResult(data, shared)).resolves.toBe("shared");
-    await expect(sharePreparedResult(data, aborted)).resolves.toBe("aborted");
-    await expect(sharePreparedResult(data, blocked)).resolves.toBe("unavailable");
-    await expect(sharePreparedResult(data, {})).resolves.toBe("unavailable");
-  });
-});
-
-describe("directShareNotice", () => {
-  it("says the image went with the share sheet, and stays quiet when cancelled", () => {
-    expect(directShareNotice("shared")).toBe("画像付きで共有画面を開きました。");
-    expect(directShareNotice("aborted")).toBe("");
-    expect(directShareNotice("unavailable")).toBe(
-      "このブラウザでは、画像付きのまま共有できません。",
-    );
-    expect(directShareNotice("shared")).not.toContain("貼り付け");
   });
 });
 
@@ -234,6 +158,52 @@ describe("deliverResultPng", () => {
       download: () => false,
     });
     expect(outcome).toBe("failed");
+  });
+
+  it("opens a missing-clipboard post before the png promise settles, and skips a spent download", async () => {
+    const order: string[] = [];
+    let resolveBlob: (blob: Blob) => void = () => {};
+    const png = new Promise<Blob>((resolve) => {
+      resolveBlob = resolve;
+    });
+    const pending = deliverResultPng({
+      png,
+      filename: "nisa-binbo-kekka.png",
+      clipboard: null,
+      download: () => {
+        order.push("download");
+        return true;
+      },
+      opened: () => {
+        order.push("open");
+      },
+    });
+    expect(order).toEqual(["open"]);
+    resolveBlob(pngBlob());
+    await expect(pending).resolves.toBe("saved");
+    expect(order).toEqual(["open", "download"]);
+  });
+
+  it("does not claim a save when the gesture is already spent", async () => {
+    vi.stubGlobal("navigator", { userActivation: { isActive: false } });
+    try {
+      const download = vi.fn(() => true);
+      let opened = false;
+      const outcome = await deliverResultPng({
+        png: Promise.resolve(pngBlob()),
+        filename: "nisa-binbo-kekka.png",
+        clipboard: null,
+        download,
+        opened: () => {
+          opened = true;
+        },
+      });
+      expect(opened).toBe(true);
+      expect(download).not.toHaveBeenCalled();
+      expect(outcome).toBe("failed");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("saves a ready png before opening the post screen", async () => {

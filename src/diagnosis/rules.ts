@@ -55,7 +55,7 @@ export const RULES: Rule[] = [
     id: "idle-cash-lots",
     severity: "loss",
     when: (answers) => answers.idleCash === "lots" && quotaPossiblyLeft(answers),
-    title: "投資に使う予定のお金が、預金口座に残っています",
+    title: "預金口座に、お金が残っています",
     detail:
       "かなりの現金が預金のままです。枠が残っているなら、そのお金を今年のNISA枠で使うか検討してください。何をいくら買うかは述べません。",
   },
@@ -63,7 +63,7 @@ export const RULES: Rule[] = [
     id: "idle-cash-some",
     severity: "risk",
     when: (answers) => answers.idleCash === "some" && quotaPossiblyLeft(answers),
-    title: "投資したいお金が、少し預金に残っています",
+    title: "預金口座に、お金が少し残っています",
     detail: "枠が残っているなら、そのお金を今年のNISA枠で使うか検討してください。",
   },
   {
@@ -128,9 +128,9 @@ export const RULES: Rule[] = [
     id: "sold-and-stopped",
     severity: "loss",
     when: (answers) => answers.soldThisYear === "stopped",
-    title: "売った分の枠は、今年は戻りません",
+    title: "売る分の枠は、今年は戻りません",
     detail:
-      "今年使った年間枠は、売っても戻ってきません。残枠があるなら、今年中に使うか検討してください。何を買い直すかは述べません。",
+      "今年の年間枠は、売っても戻ってきません。残枠があるなら、今年中に使うか検討してください。何を買い直すかは述べません。",
   },
   {
     id: "broker-cash-lots",
@@ -162,8 +162,8 @@ export const RULES: Rule[] = [
     id: "dividend-taxed",
     severity: "loss",
     when: (answers) => answers.dividendRoute === "other",
-    title: "配当金の受取方式によっては課税されます",
+    title: "配当金の受取先によっては課税されます",
     detail:
-      "株式数比例配分方式以外だと、NISAの株の配当にも税金がかかることがあります。受取方式を証券会社で確認してください。銘柄は勧めません。",
+      "証券会社の口座（株式数比例配分方式）以外で受け取ると、NISAの株の配当にも税金がかかることがあります。受取先を証券会社で確認してください。銘柄は勧めません。",
   },
 ];
