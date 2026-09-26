@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONSULT_COPY, consultResult } from "./consult";
+import { CONSULT_COPY, CONSULT_LIMIT, consultResult } from "./consult";
 
 describe("consultResult", () => {
   it("sends the on-screen wording and drops finding ids", () => {
@@ -37,6 +37,7 @@ describe("consultResult", () => {
     expect(CONSULT_COPY.fab).toBe("AIに相談");
     expect(CONSULT_COPY.unconfigured).toBe("相談の準備ができていません");
     expect(CONSULT_COPY.note).toContain("投資助言ではありません");
+    expect(CONSULT_LIMIT.messages).toBe(25);
     expect(CONSULT_COPY.note).toContain("銘柄の推奨や税額の計算はしません");
   });
 });
