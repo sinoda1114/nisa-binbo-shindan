@@ -4,7 +4,7 @@ import { QUESTIONS, isComplete } from "./quiz";
 describe("QUESTIONS", () => {
   it("asks ten distinct questions about how NISA is used", () => {
     expect(QUESTIONS.map((question) => question.field)).toEqual([
-      "account",
+      "quotaPlan",
       "quotaUse",
       "frameUse",
       "recurring",
@@ -20,7 +20,7 @@ describe("QUESTIONS", () => {
   it("is complete only after every answer is present", () => {
     expect(
       isComplete({
-        account: "opened",
+        quotaPlan: "use",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -29,7 +29,7 @@ describe("QUESTIONS", () => {
     ).toBe(false);
     expect(
       isComplete({
-        account: "opened",
+        quotaPlan: "use",
         quotaUse: "most",
         frameUse: "both",
         recurring: "running",

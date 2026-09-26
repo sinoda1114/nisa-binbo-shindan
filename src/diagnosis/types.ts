@@ -1,4 +1,4 @@
-export type AccountStatus = "opened" | "planning" | "none";
+export type QuotaPlan = "use" | "defer" | "undecided" | "unknown";
 export type QuotaUse = "none" | "some" | "most" | "unknown";
 export type FrameUse = "tsumitate" | "growth" | "both" | "unsure" | "none";
 export type IdleCash = "lots" | "some" | "none" | "unknown";
@@ -10,7 +10,7 @@ export type SameBroker = "same" | "other" | "not-buying" | "unknown";
 export type DividendRoute = "proportional" | "other" | "none" | "unknown";
 
 export type Answers = {
-  account: AccountStatus;
+  quotaPlan: QuotaPlan;
   quotaUse: QuotaUse;
   frameUse: FrameUse;
   recurring: Recurring;
@@ -23,8 +23,8 @@ export type Answers = {
 };
 
 export type FindingId =
-  | "no-account"
-  | "planning-only"
+  | "quota-deferred"
+  | "quota-undecided"
   | "unused-quota"
   | "partial-quota"
   | "unknown-quota"
@@ -33,7 +33,7 @@ export type FindingId =
   | "taxable-while-quota-left"
   | "frame-unsure"
   | "growth-without-tsumitate"
-  | "opened-but-not-buying"
+  | "not-buying"
   | "recurring-paused"
   | "recurring-never"
   | "recurring-unknown"

@@ -1,10 +1,10 @@
 import type {
-  AccountStatus,
   Answers,
   BrokerCash,
   DividendRoute,
   FrameUse,
   IdleCash,
+  QuotaPlan,
   QuotaUse,
   Recurring,
   SameBroker,
@@ -19,9 +19,9 @@ type Choice<Value extends string> = {
 
 export type Question =
   | {
-      field: "account";
+      field: "quotaPlan";
       prompt: string;
-      choices: Choice<AccountStatus>[];
+      choices: Choice<QuotaPlan>[];
     }
   | {
       field: "quotaUse";
@@ -71,12 +71,13 @@ export type Question =
 
 export const QUESTIONS: Question[] = [
   {
-    field: "account",
-    prompt: "NISA口座は開設していますか。",
+    field: "quotaPlan",
+    prompt: "今年のNISA枠は、年内に使う予定ですか。",
     choices: [
-      { value: "opened", label: "開設している" },
-      { value: "planning", label: "これから開設する" },
-      { value: "none", label: "開設していない" },
+      { value: "use", label: "今年中に使う" },
+      { value: "defer", label: "来年に回す" },
+      { value: "undecided", label: "まだ決めていない" },
+      { value: "unknown", label: "わからない" },
     ],
   },
   {
@@ -174,7 +175,7 @@ export const QUESTIONS: Question[] = [
 
 export function isComplete(answers: Partial<Answers>): answers is Answers {
   return (
-    answers.account !== undefined &&
+    answers.quotaPlan !== undefined &&
     answers.quotaUse !== undefined &&
     answers.frameUse !== undefined &&
     answers.recurring !== undefined &&
