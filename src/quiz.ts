@@ -1,15 +1,16 @@
 import type {
-  AccountStatus,
   Answers,
   BrokerCash,
   DividendRoute,
   FrameUse,
+  GrowthQuota,
   IdleCash,
   QuotaUse,
   Recurring,
   SameBroker,
   SoldThisYear,
   TaxableLeak,
+  TsumitateAmount,
 } from "./diagnosis/types";
 
 type Choice<Value extends string> = {
@@ -19,11 +20,6 @@ type Choice<Value extends string> = {
 
 export type Question =
   | {
-      field: "account";
-      prompt: string;
-      choices: Choice<AccountStatus>[];
-    }
-  | {
       field: "quotaUse";
       prompt: string;
       choices: Choice<QuotaUse>[];
@@ -32,6 +28,16 @@ export type Question =
       field: "frameUse";
       prompt: string;
       choices: Choice<FrameUse>[];
+    }
+  | {
+      field: "tsumitateAmount";
+      prompt: string;
+      choices: Choice<TsumitateAmount>[];
+    }
+  | {
+      field: "growthQuota";
+      prompt: string;
+      choices: Choice<GrowthQuota>[];
     }
   | {
       field: "recurring";
@@ -71,15 +77,6 @@ export type Question =
 
 export const QUESTIONS: Question[] = [
   {
-    field: "account",
-    prompt: "NISA口座は開設していますか。",
-    choices: [
-      { value: "opened", label: "開設している" },
-      { value: "planning", label: "これから開設する" },
-      { value: "none", label: "開設していない" },
-    ],
-  },
-  {
     field: "quotaUse",
     prompt: "今年のNISAの年間投資枠を、どのくらい使っていますか。",
     choices: [
@@ -98,6 +95,27 @@ export const QUESTIONS: Question[] = [
       { value: "both", label: "両方使っている" },
       { value: "unsure", label: "枠の違いはよくわからない" },
       { value: "none", label: "まだ買っていない" },
+    ],
+  },
+  {
+    field: "tsumitateAmount",
+    prompt: "つみたて投資枠の定期買付は、月いくらくらいですか。",
+    choices: [
+      { value: "symbolic", label: "月数千円以下" },
+      { value: "moderate", label: "月1万円前後" },
+      { value: "filling", label: "年120万円に近い" },
+      { value: "none", label: "つみたてはしていない" },
+      { value: "unknown", label: "わからない" },
+    ],
+  },
+  {
+    field: "growthQuota",
+    prompt: "成長投資枠（年240万円）は、今年どのくらい使っていますか。",
+    choices: [
+      { value: "none", label: "ほとんど使っていない" },
+      { value: "some", label: "一部だけ" },
+      { value: "most", label: "ほぼ使い切っている" },
+      { value: "unknown", label: "わからない" },
     ],
   },
   {
@@ -174,9 +192,10 @@ export const QUESTIONS: Question[] = [
 
 export function isComplete(answers: Partial<Answers>): answers is Answers {
   return (
-    answers.account !== undefined &&
     answers.quotaUse !== undefined &&
     answers.frameUse !== undefined &&
+    answers.tsumitateAmount !== undefined &&
+    answers.growthQuota !== undefined &&
     answers.recurring !== undefined &&
     answers.soldThisYear !== undefined &&
     answers.idleCash !== undefined &&

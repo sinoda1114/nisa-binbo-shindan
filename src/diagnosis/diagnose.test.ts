@@ -4,6 +4,8 @@ import { RULES } from "./rules";
 import type { Answers, FindingId, Verdict } from "./types";
 
 const NEUTRAL = {
+  tsumitateAmount: "moderate",
+  growthQuota: "most",
   recurring: "running",
   soldThisYear: "not-sold",
   brokerCash: "none",
@@ -11,7 +13,13 @@ const NEUTRAL = {
   dividendRoute: "none",
 } as const satisfies Pick<
   Answers,
-  "recurring" | "soldThisYear" | "brokerCash" | "sameBroker" | "dividendRoute"
+  | "tsumitateAmount"
+  | "growthQuota"
+  | "recurring"
+  | "soldThisYear"
+  | "brokerCash"
+  | "sameBroker"
+  | "dividendRoute"
 >;
 
 function fill(
@@ -39,7 +47,6 @@ describe("diagnose", () => {
   it("marks opened, full-ish usage as ok with no findings", () => {
     const result = diagnose(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -51,22 +58,27 @@ describe("diagnose", () => {
     expect(result.headline).toBe("今年のNISA枠をおおむね活用できています");
   });
 
-  it("marks no account plus lots of idle cash as loss", () => {
+  it("marks a symbolic tsumitate amount as risk while this year's quota remains", () => {
     const answers = fill({
-      account: "none",
-      quotaUse: "unknown",
-      frameUse: "unsure",
-      idleCash: "lots",
-      taxableLeak: "unknown",
+      quotaUse: "some",
+      frameUse: "both",
+      idleCash: "none",
+      taxableLeak: "no",
+      tsumitateAmount: "symbolic",
     });
-    expectDiagnosis(answers, "loss", ["no-account", "idle-cash-lots"]);
-    expect(diagnose(answers).headline).toBe("今年の非課税枠を取りこぼしています");
+    expectDiagnosis(answers, "risky", ["partial-quota", "tsumitate-small"]);
+    const finding = diagnose(answers).findings.find(
+      (item) => item.id === "tsumitate-small",
+    );
+    expect(finding?.detail).toBe(
+      "積立額が小さく、つみたて投資枠の年120万円に届いていません。未使用分は翌年に繰り越せません。何を積むかは述べません。",
+    );
+    expect(finding?.detail).not.toMatch(/おすすめ|銘柄は/);
   });
 
   it("stacks unused quota, idle cash, taxable leak, and unsure frames as loss", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "none",
         frameUse: "unsure",
         idleCash: "lots",
@@ -84,7 +96,6 @@ describe("diagnose", () => {
 
   it("marks partial quota and some idle cash as risky without unused-quota", () => {
     const answers = fill({
-      account: "opened",
       quotaUse: "some",
       frameUse: "tsumitate",
       idleCash: "some",
@@ -98,7 +109,6 @@ describe("diagnose", () => {
   it("marks growth-centered use as the only finding when quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "growth",
         idleCash: "none",
@@ -109,24 +119,68 @@ describe("diagnose", () => {
     );
   });
 
-  it("marks planning-only as the only finding", () => {
+  it("does not mark a symbolic tsumitate amount when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "planning",
+        quotaUse: "most",
+        frameUse: "both",
+        idleCash: "none",
+        taxableLeak: "no",
+        tsumitateAmount: "symbolic",
+      }),
+      "ok",
+      [],
+    );
+  });
+
+  it("marks leftover growth quota when the annual quota is not almost unused", () => {
+    const answers = fill({
+      quotaUse: "most",
+      frameUse: "both",
+      idleCash: "none",
+      taxableLeak: "no",
+      growthQuota: "some",
+    });
+    expectDiagnosis(answers, "risky", ["growth-quota-left"]);
+    const finding = diagnose(answers).findings.find(
+      (item) => item.id === "growth-quota-left",
+    );
+    expect(finding?.detail).toBe(
+      "成長投資枠が残っています。未使用分は翌年に繰り越せません。銘柄は勧めません。",
+    );
+  });
+
+  it("leaves an almost unused annual quota to unused-quota", () => {
+    expectDiagnosis(
+      fill({
+        quotaUse: "none",
+        frameUse: "both",
+        idleCash: "none",
+        taxableLeak: "no",
+        tsumitateAmount: "symbolic",
+        growthQuota: "none",
+      }),
+      "loss",
+      ["unused-quota", "tsumitate-small"],
+    );
+  });
+
+  it("still flags an opened account that has not bought yet", () => {
+    expectDiagnosis(
+      fill({
         quotaUse: "unknown",
         frameUse: "none",
         idleCash: "none",
         taxableLeak: "unknown",
       }),
       "risky",
-      ["planning-only"],
+      ["unknown-quota", "opened-but-not-buying"],
     );
   });
 
-  it("does not fire idle-cash-lots when the account is opened and quota is mostly used", () => {
+  it("does not fire idle-cash-lots when this year's quota is mostly used", () => {
     const result = diagnose(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "tsumitate",
         idleCash: "lots",
@@ -141,7 +195,6 @@ describe("diagnose", () => {
   it("does not claim leftover quota when usage is unknown and buying outside NISA", () => {
     const result = diagnose(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "both",
         idleCash: "none",
@@ -161,7 +214,6 @@ describe("diagnose", () => {
   it("treats unknown quota as possibly left, not as mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "both",
         idleCash: "lots",
@@ -175,7 +227,6 @@ describe("diagnose", () => {
   it("marks unknown quota alone as risky, not ok", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "tsumitate",
         idleCash: "none",
@@ -189,7 +240,6 @@ describe("diagnose", () => {
   it("adds a paused tsumitate setting beside a partial quota", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -204,7 +254,6 @@ describe("diagnose", () => {
   it("adds a missing tsumitate setting when the quota is unused", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "none",
         frameUse: "tsumitate",
         idleCash: "none",
@@ -219,7 +268,6 @@ describe("diagnose", () => {
   it("adds an unknown tsumitate setting beside an unknown quota", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "unknown",
         frameUse: "both",
         idleCash: "none",
@@ -234,7 +282,6 @@ describe("diagnose", () => {
   it("adds a small uninvested broker balance beside a partial quota", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -249,7 +296,6 @@ describe("diagnose", () => {
   it("does not nag about tsumitate settings when the quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -263,7 +309,6 @@ describe("diagnose", () => {
 
   it("marks selling and stopping as its own loss", () => {
     const answers = fill({
-      account: "opened",
       quotaUse: "most",
       frameUse: "both",
       idleCash: "none",
@@ -277,7 +322,6 @@ describe("diagnose", () => {
   it("does not treat an unknown sale as a finding", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -292,7 +336,6 @@ describe("diagnose", () => {
   it("marks a large uninvested broker balance as loss while quota remains", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -307,7 +350,6 @@ describe("diagnose", () => {
   it("does not flag broker cash when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -322,7 +364,6 @@ describe("diagnose", () => {
   it("marks buying at another broker as loss while quota remains", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "some",
         frameUse: "both",
         idleCash: "none",
@@ -337,7 +378,6 @@ describe("diagnose", () => {
   it("does not flag another broker when this year's quota is mostly used", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -349,25 +389,37 @@ describe("diagnose", () => {
     );
   });
 
-  it("does not add other-broker when there is no NISA account", () => {
+  it("marks an unused growth quota beside a partial annual quota", () => {
     expectDiagnosis(
       fill({
-        account: "none",
-        quotaUse: "unknown",
-        frameUse: "none",
+        quotaUse: "some",
+        frameUse: "both",
         idleCash: "none",
-        taxableLeak: "unknown",
-        sameBroker: "other",
+        taxableLeak: "no",
+        growthQuota: "none",
       }),
-      "loss",
-      ["no-account"],
+      "risky",
+      ["partial-quota", "growth-quota-left"],
+    );
+  });
+
+  it("does not flag an unknown growth quota", () => {
+    expectDiagnosis(
+      fill({
+        quotaUse: "some",
+        frameUse: "both",
+        idleCash: "none",
+        taxableLeak: "no",
+        growthQuota: "unknown",
+      }),
+      "risky",
+      ["partial-quota"],
     );
   });
 
   it("marks a non-proportional dividend route as loss", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "both",
         idleCash: "none",
@@ -390,7 +442,6 @@ describe("diagnose", () => {
   it("does not flag an unknown dividend route", () => {
     expectDiagnosis(
       fill({
-        account: "opened",
         quotaUse: "most",
         frameUse: "growth",
         idleCash: "none",
