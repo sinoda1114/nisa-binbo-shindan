@@ -125,10 +125,14 @@ describe("handleConsult", () => {
     expect(call?.body).not.toContain("quota-deferred");
     expect(call?.body).toContain("銘柄、ファンド、商品名は出しません");
     expect(call?.body).toContain("税額は計算しません");
-    expect(call?.body).toContain("「アドバイスして」「どうすればよいか」と聞かれたら、断らずに");
+    expect(call?.body).toContain("「アドバイスして」「具体的に」「どうすればよいか」と聞かれたら、断らず");
+    expect(call?.body).toContain("所見の見出しや本文を写しません");
+    expect(call?.body).toContain("同じ一覧を繰り返しません");
     expect(call?.body).toContain("確認の場所は、所見に書いてあるものだけを使います");
+    expect(call?.body).toContain("渡されていない数字や制度は足しません");
     expect(call?.body).toContain("所見が無いときは");
     expect(call?.body).not.toContain("証券会社の画面");
+    expect(call?.body).not.toContain("所見ごとに");
     expect(call?.body).not.toContain("言い換える係");
     expect(call?.body).not.toContain("結果の確認に戻します");
     expect(call?.body).toContain("MINIMAL");
@@ -179,8 +183,10 @@ describe("handleConsult", () => {
   it("asks for an opening line before the user writes", () => {
     const body = geminiRequestBody({ result, messages: [] });
     expect(body.contents[0]?.parts[0]?.text).toContain("相談を始めてください");
-    expect(body.contents[0]?.parts[0]?.text).toContain("所見が無いときは");
+    expect(body.contents[0]?.parts[0]?.text).toContain("一つだけ");
+    expect(body.contents[0]?.parts[0]?.text).toContain("所見を写さずに");
     expect(body.contents[0]?.parts[0]?.text).not.toContain("言い換え");
+    expect(body.contents[0]?.parts[0]?.text).not.toContain("所見ごとに");
     expect(body.contents[0]?.parts[0]?.text).toContain(result.summary);
   });
 

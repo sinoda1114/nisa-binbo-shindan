@@ -1,6 +1,6 @@
 // 画面に出る診断文。scripts/emit-consult-copy.ts が src から書く。
 // Vercel は api/*.ts だけを JavaScript にする。../src は関数の中で解決できない。
-export const consultLimit = {"user":600,"model":2000,"messages":20};
+export const consultLimit = {"user":600,"model":2000,"messages":25};
 export const verdicts = {
   "loss": {
     "label": "損している",

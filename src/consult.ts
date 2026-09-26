@@ -43,7 +43,7 @@ export type ConsultReply =
 export const CONSULT_LIMIT = {
   user: 600,
   model: 2_000,
-  messages: 20,
+  messages: 1 + 12 * 2,
 } as const;
 
 export function consultResult(diagnosis: Diagnosis): ConsultResult {
