@@ -123,8 +123,11 @@ describe("handleConsult", () => {
     expect(call?.body).not.toContain("quotaPlan");
     expect(call?.body).not.toContain("defer");
     expect(call?.body).not.toContain("quota-deferred");
-    expect(call?.body).toContain("銘柄、ファンド、商品の推奨はしません");
-    expect(call?.body).toContain("税額の計算はしません");
+    expect(call?.body).toContain("銘柄、ファンド、商品名は出しません");
+    expect(call?.body).toContain("税額は計算しません");
+    expect(call?.body).toContain("「アドバイスして」「どうすればよいか」と聞かれたら、断らずに");
+    expect(call?.body).not.toContain("言い換える係");
+    expect(call?.body).not.toContain("結果の確認に戻します");
     expect(call?.body).toContain("MINIMAL");
   });
 
@@ -172,7 +175,8 @@ describe("handleConsult", () => {
 
   it("asks for an opening line before the user writes", () => {
     const body = geminiRequestBody({ result, messages: [] });
-    expect(body.contents[0]?.parts[0]?.text).toContain("相談の最初の一文を書いてください");
+    expect(body.contents[0]?.parts[0]?.text).toContain("相談を始めてください");
+    expect(body.contents[0]?.parts[0]?.text).not.toContain("言い換え");
     expect(body.contents[0]?.parts[0]?.text).toContain(result.summary);
   });
 
