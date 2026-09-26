@@ -199,6 +199,11 @@ body {
   outline-offset: 3px;
 }
 
+.btn:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
 .btn-primary {
   width: 100%;
   background: var(--ink);
@@ -231,6 +236,10 @@ body {
 
 .btn-share:hover {
   background: rgb(142 36 24 / 0.08);
+}
+
+.btn-share:disabled:hover {
+  background: var(--paper);
 }
 
 .share-quiet {
@@ -301,6 +310,11 @@ body {
 .share-link:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
+}
+
+.share-link:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
 
 .share-status {
