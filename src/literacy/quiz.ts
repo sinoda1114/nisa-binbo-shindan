@@ -16,9 +16,7 @@ type Choice<Value extends string> = {
   label: string;
 };
 
-export const PROVISIONAL_TITLE = "金融リテラシー診断（仮）";
-
-export const TITLE_NOTE = "タイトルは仮のものです。";
+export const LITERACY_TITLE = "金融リテラシー診断";
 
 export type Question =
   | {
