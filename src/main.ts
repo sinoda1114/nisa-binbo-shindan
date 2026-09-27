@@ -74,11 +74,10 @@ function renderHome() {
   nisa.type = "button";
   nisa.addEventListener("click", () => openNisa());
   card.append(nisa);
-  const literacy = el("button", "btn btn-block", "金融リテラシー診断（仮）");
+  const literacy = el("button", "btn btn-block", "金融リテラシー診断");
   literacy.type = "button";
   literacy.addEventListener("click", () => openLiteracy());
   card.append(literacy);
-  card.append(el("p", "facts", "金融リテラシー診断のタイトルは仮のものです。"));
   renderDisclaimer(card);
   mount(card, title);
 }

@@ -1,7 +1,7 @@
 import { literacyMood, resultHead } from "../result-art";
 import { LITERACY_IMAGE_NAME } from "../result-image";
 import { mountSharePanel } from "../share-panel";
-import { PROVISIONAL_TITLE, QUESTIONS, TITLE_NOTE, type Question } from "./quiz";
+import { LITERACY_TITLE, QUESTIONS, type Question } from "./quiz";
 import { linkToCopy, shareTargets } from "./share";
 import {
   initialScreen,
@@ -12,7 +12,7 @@ import {
 import type { Answers, Diagnosis, FindingSeverity, Verdict } from "./types";
 
 const DISCLAIMER =
-  "この診断は教育目的の目安です。投資助言でも税務助言でもありません。銘柄や金額は勧めません。税額は計算しません。回答は保存しません。タイトルは仮のものです。";
+  "この診断は教育目的の目安です。投資助言でも税務助言でもありません。銘柄や金額は勧めません。税額は計算しません。回答は保存しません。";
 
 const VERDICT_LABEL: Record<Verdict, string> = {
   gap: "誤解がありそうです",
@@ -160,10 +160,9 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
 
   function renderIntro() {
     const card = el("section", "panel sheet");
-    const title = el("h1", "title", PROVISIONAL_TITLE);
+    const title = el("h1", "title", LITERACY_TITLE);
     card.append(el("p", "kicker", "家計簿の一ページ"));
     card.append(title);
-    card.append(el("p", "facts", TITLE_NOTE));
     card.append(
       el(
         "p",
@@ -189,7 +188,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
       throw new Error("設問がありません");
     }
     const card = el("section", "panel sheet");
-    card.append(el("p", "running", PROVISIONAL_TITLE));
+    card.append(el("p", "running", LITERACY_TITLE));
     const nav = el("div", "nav");
     const back = el("button", "btn btn-ghost", "戻る");
     back.type = "button";
@@ -219,7 +218,7 @@ export function mountLiteracy(root: HTMLElement, options: MountOptions) {
       `stamp verdict ${STAMP_CLASS[diagnosis.verdict]}`,
       VERDICT_LABEL[diagnosis.verdict],
     );
-    card.append(el("p", "running", PROVISIONAL_TITLE));
+    card.append(el("p", "running", LITERACY_TITLE));
     card.append(resultHead(stamp, literacyMood(diagnosis.verdict)));
     card.append(el("h1", "headline", diagnosis.headline));
     card.append(el("p", "summary", diagnosis.summary));
