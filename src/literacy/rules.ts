@@ -117,7 +117,7 @@ export const RULES: Rule[] = [
     id: "tsumitate-wrong",
     severity: "gap",
     when: (answers: Answers) => answers.tsumitate === "always-up",
-    title: "同じ額で買い続けても、値動きは消えません",
+    title: "同じ商品を同じ金額で買い続けても、値動きは消えません",
     detail:
       "買う時期を分けるだけで、必ず増えることや元本が守られることは意味しません。何をいくら買うかは述べません。元本保証の有無は、その商品の説明で確認してください。",
   },
@@ -127,7 +127,7 @@ export const RULES: Rule[] = [
     when: (answers: Answers) => answers.tsumitate === "unknown",
     title: "分けて買うことの意味を確認しましょう",
     detail:
-      "毎月同じ額で買うことは、購入の時期を分けるだけです。必ず増えることや、元本が守られることは意味しません。商品の説明を確認してください。",
+      "同じ商品を毎月同じ金額で買うことは、購入の時期を分けるだけです。必ず増えることや、元本が守られることは意味しません。商品の説明を確認してください。",
   },
   {
     id: "trust-fee-wrong",
