@@ -156,13 +156,16 @@ export const QUESTIONS: Question[] = [
   },
   {
     field: "tsumitate",
-    prompt: "毎月同じ額で買い続けると、どうなりますか。",
+    prompt: "同じ商品を毎月同じ金額で買い続けると、どうなりますか。",
     choices: [
       {
         value: "not-guaranteed",
         label: "買う時期が分かれるだけ。必ず増えることも、元本が守られることもない",
       },
-      { value: "always-up", label: "毎月同じ額で買えば、価格が下がっても損失は必ず取り戻せる" },
+      {
+        value: "always-up",
+        label: "同じ商品を毎月同じ金額で買えば、価格が下がっても損失は必ず取り戻せる",
+      },
       { value: "unknown", label: "わからない" },
     ],
   },
