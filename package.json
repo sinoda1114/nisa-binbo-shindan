@@ -10,7 +10,7 @@
     "emit:consult-copy": "vite-node scripts/emit-consult-copy.ts"
   },
   "devDependencies": {
-    "typescript": "^5.9.2",
+    "typescript": "^7.0.2",
     "vite": "^6.3.5",
     "vitest": "^3.2.4"
   },
