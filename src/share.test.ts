@@ -1,23 +1,69 @@
 import { describe, expect, it } from "vitest";
-import type { Verdict } from "./diagnosis/types";
+import type { Finding, FindingSeverity, Verdict } from "./diagnosis/types";
 import { shareMessage, shareTargets } from "./share";
 import { PUBLIC_URL, shareDestinations } from "./share-destinations";
 
-const VERDICTS: Verdict[] = ["loss", "risky", "ok"];
+const CASES: readonly {
+  verdict: Verdict;
+  severities: readonly FindingSeverity[];
+  message: string;
+}[] = [
+  {
+    verdict: "ok",
+    severities: [],
+    message:
+      "NISA貧乏診断の結果は「今年のNISA枠をおおむね活用できています」でした。 ★★★★★",
+  },
+  {
+    verdict: "risky",
+    severities: ["risk"],
+    message:
+      "NISA貧乏診断の結果は「NISAの使い方に確認したい点があります」でした。 ★★★★☆",
+  },
+  {
+    verdict: "risky",
+    severities: ["risk", "risk"],
+    message:
+      "NISA貧乏診断の結果は「NISAの使い方に確認したい点があります」でした。 ★★★☆☆",
+  },
+  {
+    verdict: "loss",
+    severities: ["loss"],
+    message:
+      "NISA貧乏診断の結果は「今年の非課税枠を取りこぼしています」でした。 ★★☆☆☆",
+  },
+  {
+    verdict: "loss",
+    severities: ["loss", "loss"],
+    message:
+      "NISA貧乏診断の結果は「今年の非課税枠を取りこぼしています」でした。 ★☆☆☆☆",
+  },
+];
+
+function finding(severity: FindingSeverity): Finding {
+  return {
+    id: "unused-quota",
+    severity,
+    title: "所見",
+    detail: "詳細",
+  };
+}
+
+function diagnosis(verdict: Verdict, severities: readonly FindingSeverity[]) {
+  return {
+    verdict,
+    findings: severities.map((severity) => finding(severity)),
+  };
+}
 
 describe("shareMessage", () => {
-  it("says this is my NISA diagnosis and names the verdict, without a URL", () => {
-    expect(shareMessage("loss")).toBe(
-      "NISA貧乏診断の結果は「今年の非課税枠を取りこぼしています」でした。",
-    );
-    expect(shareMessage("risky")).toBe(
-      "NISA貧乏診断の結果は「NISAの使い方に確認したい点があります」でした。",
-    );
-    expect(shareMessage("ok")).toBe(
-      "NISA貧乏診断の結果は「今年のNISA枠をおおむね活用できています」でした。",
-    );
-    const messages = VERDICTS.map((verdict) => shareMessage(verdict));
-    expect(new Set(messages).size).toBe(VERDICTS.length);
+  it("names the verdict and appends the same five-star row, without a URL", () => {
+    const messages = CASES.map(({ verdict, severities, message }) => {
+      const text = shareMessage(diagnosis(verdict, severities));
+      expect(text).toBe(message);
+      return text;
+    });
+    expect(new Set(messages).size).toBe(CASES.length);
     for (const message of messages) {
       expect(message.startsWith("NISA貧乏診断の結果は")).toBe(true);
       expect(message).not.toContain(PUBLIC_URL);
@@ -29,9 +75,10 @@ describe("shareMessage", () => {
   });
 
   it("passes that message to the shared destinations", () => {
-    for (const verdict of VERDICTS) {
-      expect(shareTargets(verdict)).toEqual(
-        shareDestinations(shareMessage(verdict)),
+    for (const { verdict, severities } of CASES) {
+      const sample = diagnosis(verdict, severities);
+      expect(shareTargets(sample)).toEqual(
+        shareDestinations(shareMessage(sample)),
       );
     }
   });

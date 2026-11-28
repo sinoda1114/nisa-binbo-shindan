@@ -371,6 +371,26 @@ body {
   color: var(--ok);
 }
 
+.utilization {
+  margin: 0;
+  line-height: 1;
+}
+
+.utilization-marks {
+  display: inline-flex;
+  gap: 0.2rem;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+}
+
+.star-on {
+  color: var(--ink);
+}
+
+.star-off {
+  color: #8a8178;
+}
+
 .result-head {
   display: flex;
   align-items: flex-end;
