@@ -10,6 +10,8 @@ https://nisa-binbo-shindan.vercel.app
 
 ## 動かす
 
+Node.js は 20 系、22 系、または 24 以上が必要です。
+
 ```bash
 npm install
 npm test
