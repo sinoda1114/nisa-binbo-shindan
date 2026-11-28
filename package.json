@@ -2,6 +2,9 @@
   "name": "nisa-binbo-shindan",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
