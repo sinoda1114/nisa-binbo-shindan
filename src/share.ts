@@ -1,4 +1,5 @@
-import type { Verdict } from "./diagnosis/types";
+import { utilizationLevel, utilizationMarks } from "./diagnosis/level";
+import type { Diagnosis, Verdict } from "./diagnosis/types";
 import {
   shareDestinations,
   type ShareDestination,
@@ -10,10 +11,15 @@ const BLURB: Record<Verdict, string> = {
   ok: "NISA貧乏診断の結果は「今年のNISA枠をおおむね活用できています」でした。",
 };
 
-export function shareMessage(verdict: Verdict): string {
-  return BLURB[verdict];
+export function shareMessage(
+  diagnosis: Pick<Diagnosis, "verdict" | "findings">,
+): string {
+  const marks = utilizationMarks(utilizationLevel(diagnosis));
+  return `${BLURB[diagnosis.verdict]} ${marks}`;
 }
 
-export function shareTargets(verdict: Verdict): ShareDestination[] {
-  return shareDestinations(shareMessage(verdict));
+export function shareTargets(
+  diagnosis: Pick<Diagnosis, "verdict" | "findings">,
+): ShareDestination[] {
+  return shareDestinations(shareMessage(diagnosis));
 }

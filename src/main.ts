@@ -1,6 +1,7 @@
 import { VERDICT_LABEL, consultResult } from "./consult";
 import { mountConsult } from "./consult-panel";
 import { diagnose } from "./diagnosis/diagnose";
+import { utilizationLevel, utilizationMarks } from "./diagnosis/level";
 import type { Answers, Diagnosis } from "./diagnosis/types";
 import { mountLiteracy } from "./literacy/view";
 import { QUESTIONS, isComplete, type Question } from "./quiz";
@@ -187,7 +188,7 @@ function renderStart() {
     el(
       "p",
       "lead",
-      "NISA口座を開設している人について、非課税枠を活用できているかを確認します。結果は「損している」「危うい」「概ね良い」の3段階で示します。",
+      "NISA口座を開設している人について、非課税枠を活用できているかを確認します。結果は「損している」「危うい」「概ね良い」で示し、活用レベルを星5つで表します。",
     ),
   );
   card.append(
@@ -303,6 +304,27 @@ function renderQuestion(index: number, answers: Partial<Answers>) {
   mount(card, heading);
 }
 
+function renderUtilization(diagnosis: Diagnosis): HTMLElement {
+  const level = utilizationLevel(diagnosis);
+  const row = el("p", "utilization");
+  row.setAttribute("role", "img");
+  row.setAttribute("aria-label", `活用レベル ${level}（5段階）`);
+  const marks = utilizationMarks(level);
+  const shown = el("span", "utilization-marks");
+  shown.setAttribute("aria-hidden", "true");
+  for (let index = 0; index < marks.length; index += 1) {
+    shown.append(
+      el(
+        "span",
+        index < level ? "star star-on" : "star star-off",
+        marks.charAt(index),
+      ),
+    );
+  }
+  row.append(shown);
+  return row;
+}
+
 function renderResult(diagnosis: Diagnosis) {
   const card = el("section", "panel sheet");
   const stamp = el(
@@ -312,6 +334,7 @@ function renderResult(diagnosis: Diagnosis) {
   );
   card.append(runningHead());
   card.append(resultHead(stamp, diagnosis.verdict));
+  card.append(renderUtilization(diagnosis));
   card.append(el("h1", "headline", diagnosis.headline));
   appendBlocks(card, "summary", diagnosis.summary);
   if (diagnosis.findings.length > 0) {
@@ -336,7 +359,7 @@ function renderResult(diagnosis: Diagnosis) {
   mountSharePanel(share, {
     paper: card,
     filename: NISA_IMAGE_NAME,
-    destinations: shareTargets(diagnosis.verdict),
+    destinations: shareTargets(diagnosis),
     linkText: linkToCopy(),
   });
   mountConsult(desk, card, consultResult(diagnosis));
